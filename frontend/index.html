@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Download — YouTube Media Engine</title>
+  <meta name="description"
+    content="Studio Download — High-fidelity YouTube video & audio extraction engine for editors and creators.">
+
+  <!-- Typography: JetBrains Mono, Outfit, Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icon.png">
+</head>
+
+<body>
+  <!-- Header / Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-badge" style="padding: 2px; display: flex; align-items: center; justify-content: center; background: transparent; border: none;">
+          <img src="/static/icon.png" alt="Studio Download" width="28" height="28" style="border-radius: 6px; box-shadow: 0 0 10px rgba(250,204,21,0.25);">
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Studio Download</span>
+          <span class="brand-version mono" data-i18n="brand_version">v1.0</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Developer / Modern Status Display -->
+        <div class="code-status-badge mono" id="engineStatusBadge" title="Engine IPC Status">
+          <span class="lbl-dev"><span class="c-dim">[</span><span class="c-key">SYS</span><span class="c-op">:</span><span class="c-val"
+            id="engineStatusText">READY_200</span><span class="c-sep">|</span><span class="c-key">PORT</span><span
+            class="c-op">:</span><span class="c-num">8080</span><span class="c-dim">]</span></span>
+          <span class="lbl-normal"><span class="status-pulse-dot"></span><span id="engineStatusLabel" data-i18n="engine_ready">Engine Siap</span></span>
+        </div>
+
+        <button class="nav-btn" id="openFolderBtn" data-i18n-title="nav_folder_title" title="Buka Folder Unduhan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="lbl-dev mono">DIR</span>
+          <span class="lbl-normal" data-i18n="nav_folder">Folder</span>
+        </button>
+
+        <a href="https://github.com/EmFaisal-code/Studio-Download" target="_blank" rel="noopener noreferrer" class="nav-btn" id="repoBtn" title="GitHub Repository & Updates">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+          <span class="lbl-dev mono">REPO</span>
+          <span class="lbl-normal">GitHub</span>
+        </a>
+
+        <button class="nav-btn" id="langToggleBtn" data-i18n-title="nav_lang_title" title="Ganti Bahasa (ID / EN)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span class="lbl-dev mono" id="langBadgeDev">LANG:ID</span>
+          <span class="lbl-normal" id="langBadgeNormal" style="font-weight: 700;">🇮🇩 ID</span>
+        </button>
+
+        <button class="nav-btn" id="settingsBtn" data-i18n-title="nav_settings_title" title="Pengaturan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+          </svg>
+          <span class="lbl-dev mono">CONFIG</span>
+          <span class="lbl-normal" data-i18n="nav_settings">Pengaturan</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- Hero / Command Input Section -->
+    <section class="hero-section">
+      <div class="code-eyebrow">
+        <span class="lbl-dev mono"><span class="c-prompt">$</span> <span class="c-keyword">init</span><span class="c-func">media_engine</span><span class="c-dim">(&quot;</span><span class="c-string">yt-dlp@2026.8</span><span class="c-dim">&quot;, </span><span class="c-num">4K_READY</span><span class="c-dim">)</span></span>
+        <span class="lbl-normal"><span class="badge-tag">PRO</span> <span data-i18n="hero_eyebrow">YouTube 4K 60fps Media Extractor</span></span>
+      </div>
+
+      <h1 class="hero-title">
+        <span class="lbl-dev">Studio Download <span class="hero-code mono">// ingest()</span></span>
+        <span class="lbl-normal">Studio <span class="hero-title-accent">Download</span></span>
+      </h1>
+      <p class="hero-desc" data-i18n="hero_desc">
+        Engine ekstraksi media YouTube hingga <strong>4K 60fps</strong> (VP9 / H.264) dan audio <strong>AAC 44.1kHz /
+          MP3 320kbps</strong>. Output NLE-compatible, aman tanpa black screen di Adobe Premiere Pro &amp; DaVinci Resolve.
+      </p>
+
+      <!-- Pro Feature Chips (Modern Theme only) -->
+      <div class="pro-feature-pills normal-only">
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline>
+          </svg>
+          <span data-i18n="pill_4k">4K 60fps &amp; HDR</span>
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+          <span data-i18n="pill_lossless">Audio Lossless 320kbps</span>
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+            <line x1="7" y1="2" x2="7" y2="22"></line>
+            <line x1="17" y1="2" x2="17" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <line x1="2" y1="7" x2="7" y2="7"></line>
+            <line x1="2" y1="17" x2="7" y2="17"></line>
+            <line x1="17" y1="17" x2="22" y2="17"></line>
+            <line x1="17" y1="7" x2="22" y2="7"></line>
+          </svg>
+          <span data-i18n="pill_nle">NLE Premiere &amp; DaVinci</span>
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span data-i18n="pill_bot">Bypass Bot Shield</span>
+        </div>
+      </div>
+
+      <!-- URL Input Command Bar -->
+      <div class="input-card code-input-card">
+        <div class="terminal-prompt-label mono lbl-dev">
+          <span class="prompt-sym">&gt;_</span>
+          <span class="prompt-text">URI:</span>
+        </div>
+        <div class="normal-prompt-label lbl-normal" style="padding-left: 1rem; color: var(--accent-contrast); align-items: center;">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+        </div>
+        <div class="input-wrapper">
+          <input type="text" id="videoUrlInput" class="input-field mono"
+            placeholder="Tempel tautan YouTube atau link streaming (HLS .m3u8, web video)..." data-i18n-placeholder="url_placeholder" autocomplete="off" spellcheck="false">
+          <button class="paste-btn" id="pasteBtn" data-i18n-title="paste_btn_title" title="Tempel dari Clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            <span class="lbl-dev mono">[PASTE]</span>
+            <span class="lbl-normal" data-i18n="paste_btn">Tempel</span>
+          </button>
+        </div>
+
+        <button class="btn btn-primary" id="analyzeBtn">
+          <span class="btn-text">
+            <span class="lbl-dev mono">RUN_ANALYZE()</span>
+            <span class="lbl-normal" data-i18n="analyze_btn">Analisis Video</span>
+          </span>
+          <div class="spinner" id="analyzeSpinner"></div>
+        </button>
+      </div>
+
+      <!-- Stream Helper & Header Option Bar -->
+      <div class="stream-helper-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding: 0 0.5rem;">
+        <div id="urlTypeBadge" class="mono" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+          <span id="urlTypeIcon">▶</span> <span id="urlTypeText">YouTube &amp; Web Stream Ready</span>
+        </div>
+        <button type="button" class="text-btn mono" id="toggleRefererBtn" style="font-size: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+          <span data-i18n="header_referer_btn">⚙ Header / Referer (Opsional) ▾</span>
+        </button>
+      </div>
+      <div id="refererInputGroup" style="display: none; margin-top: 0.4rem; padding: 0 0.5rem;">
+        <input type="text" id="streamRefererInput" class="input-field mono" style="font-size: 0.8rem; padding: 0.45rem 0.85rem; width: 100%; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" placeholder="Referer URL (Opsional, gunakan jika website memblokir dengan 403 Forbidden)..." data-i18n-placeholder="referer_placeholder">
+      </div>
+    </section>
+
+    <!-- Inspection / Format Selection Window (Reveals on analysis) -->
+    <section class="glass-card terminal-card inspection-card" id="analysisCard" style="display: none;">
+      <!-- Card Window Bar -->
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot t-dot-red"></span>
+          <span class="t-dot t-dot-yellow"></span>
+          <span class="t-dot t-dot-green"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span>
+            <span class="lbl-dev">manifest_stream.json</span>
+            <span class="lbl-normal" data-i18n="manifest_title">Pilihan Format Unduhan</span>
+          </span>
+        </div>
+        <div class="terminal-meta mono">
+          <span class="lbl-dev c-dim">LN: 001-042</span>
+          <span class="lbl-normal" data-i18n="status_ready_dl" style="color: var(--accent-contrast); font-weight: 600;">● Siap Diunduh</span>
+        </div>
+      </div>
+
+      <div class="card-inner-content">
+        <div class="video-preview-row">
+          <div class="video-thumbnail-frame">
+            <img id="videoThumb" src="" alt="Thumbnail Video">
+            <span class="duration-badge mono" id="videoDuration">00:00:00</span>
+          </div>
+
+          <div class="video-info-meta">
+            <div class="title-edit-container">
+              <input type="text" id="customTitleInput" class="video-title-input" placeholder="Nama file video..." data-i18n-placeholder="custom_title_placeholder" title="Klik untuk mengubah nama file sebelum mengunduh" data-i18n-title="custom_title_title">
+              <div class="title-edit-hint mono">
+                <span class="lbl-dev">[FILENAME_OUTPUT]</span>
+                <span class="lbl-normal" data-i18n="filename_hint">✏ Nama file dapat diedit langsung sebelum diunduh</span>
+              </div>
+            </div>
+            <h2 class="video-title" id="videoTitle" style="display: none;">Judul Video</h2>
+            <div class="meta-tags-row mono">
+              <div class="code-meta-chip">
+                <span class="c-key"><span class="lbl-dev">CHANNEL:</span><span class="lbl-normal" data-i18n="channel_label">Kanal:</span></span>
+                <span class="c-val" id="channelName">Channel</span>
+              </div>
+              <div class="code-meta-chip">
+                <span class="c-key"><span class="lbl-dev">VIEWS:</span><span class="lbl-normal" data-i18n="views_label">Penonton:</span></span>
+                <span class="c-num" id="viewsCount">0</span>
+              </div>
+              <div class="code-meta-chip chip-highlight">
+                <span class="c-key"><span class="lbl-dev">PROFILE:</span><span class="lbl-normal">Kompatibilitas:</span></span>
+                <span class="c-val"><span class="lbl-dev">NLE_COMPATIBLE</span><span class="lbl-normal">Premiere &amp; NLE Ready</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode Selector (Tabs) -->
+        <div class="mode-tabs mono">
+          <button class="mode-tab active" data-mode="video" id="tabVideo">
+            <span class="lbl-dev"><span class="tab-index">[01]</span> CONTAINER_STREAM (MKV / MP4)</span>
+            <span class="lbl-normal">Video &amp; Audio (MKV / MP4)</span>
+          </button>
+          <button class="mode-tab" data-mode="audio" id="tabAudio">
+            <span class="lbl-dev"><span class="tab-index">[02]</span> EXTRACT_AUDIO (MP3 / M4A)</span>
+            <span class="lbl-normal">Hanya Audio (MP3 / M4A)</span>
+          </button>
+        </div>
+
+        <!-- Video Resolution Grid (Format Matrix) -->
+        <div class="format-deck" id="videoFormatsContainer">
+          <div class="format-deck-label mono">
+            <span class="lbl-dev">// FORMAT_MATRIX: RESOLUTION_TABLE</span>
+            <span class="lbl-normal">PILIHAN RESOLUSI VIDEO:</span>
+          </div>
+          <div class="format-grid" id="resolutionGrid">
+            <!-- Populated by JavaScript -->
+          </div>
+
+          <div class="options-row">
+            <div class="option-item">
+              <label class="mono" for="videoContainerSelect">
+                <span class="lbl-dev">FORMAT_CONTAINER:</span>
+                <span class="lbl-normal">Format Kontainer:</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="videoContainerSelect" class="studio-select mono">
+                  <option value="mkv" selected>MKV // Matroska (Studio Recommended)</option>
+                  <option value="mp4">MP4 // MPEG-4 Standard</option>
+                </select>
+                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="option-item">
+              <label class="mono" for="videoCodecSelect">
+                <span class="lbl-dev">CODEC_PROFILE:</span>
+                <span class="lbl-normal">Profil Codec:</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="videoCodecSelect" class="studio-select mono">
+                  <option value="compatible" selected>VP9 / H.264 + AAC (Premiere &amp; DaVinci Ready)</option>
+                  <option value="av1">AV1 (High Compression — Limited NLE Support)</option>
+                </select>
+                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio Presets Grid -->
+        <div class="format-deck" id="audioFormatsContainer" style="display: none;">
+          <div class="format-deck-label mono">
+            <span class="lbl-dev">// FORMAT_MATRIX: AUDIO_PRESETS</span>
+            <span class="lbl-normal">PRESET FORMAT AUDIO:</span>
+          </div>
+          <div class="format-grid" id="audioGrid">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Start Download CTA -->
+        <div class="action-footer">
+          <button class="btn btn-primary btn-large mono" id="startDownloadBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span class="lbl-dev">EXECUTE_DOWNLOAD()</span>
+            <span class="lbl-normal">Mulai Unduh Media</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Tasks / Queue Section (Process Pool) -->
+    <section class="glass-card terminal-card tasks-card" id="tasksSection" style="display: none;">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot"></span>
+          <span class="t-dot"></span>
+          <span class="t-dot"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          <span class="lbl-dev">process_worker_pool.sh</span>
+          <span class="lbl-normal">Antrean Unduhan</span>
+        </div>
+        <div class="terminal-meta mono">
+          <button class="btn-ghost mono" id="clearTasksBtn">
+            <span class="lbl-dev">[CLEAR_FINISHED]</span>
+            <span class="lbl-normal">Bersihkan Selesai</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-inner-content">
+        <div class="tasks-list" id="tasksList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Download History Section (Persistent Ledger) -->
+    <section class="glass-card terminal-card history-card">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot"></span>
+          <span class="t-dot"></span>
+          <span class="t-dot"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+          <span class="lbl-dev">storage_ledger.log</span>
+          <span class="lbl-normal">Riwayat Unduhan <span class="badge-count" id="historyCountBadge" style="display: none;">0</span></span>
+        </div>
+        <div class="terminal-meta mono history-actions-meta">
+          <!-- Sort Dropdown matching user reference -->
+          <div class="history-sort-container" id="historySortContainer">
+            <button class="history-sort-trigger mono" id="historySortBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Pilih Kriteria Pengurutan">
+              <span id="historySortLabel">Date Added</span>
+              <svg class="sort-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="7 15 12 20 17 15"></polyline>
+                <polyline points="7 9 12 4 17 9"></polyline>
+              </svg>
+            </button>
+            <button class="history-order-toggle mono" id="historyOrderBtn" type="button" title="Ubah Arah Urutan (Terbaru / Terlama)">
+              <span id="historyOrderIcon">↓</span>
+            </button>
+            <div class="history-sort-dropdown mono" id="historySortDropdown" style="display: none;">
+              <div class="sort-item active" data-sort="date_added">
+                <span class="sort-check">✓</span>
+                <span class="sort-name">Date Added</span>
+              </div>
+              <div class="sort-item" data-sort="date_updated">
+                <span class="sort-check">✓</span>
+                <span class="sort-name">Date Updated</span>
+              </div>
+              <div class="sort-item" data-sort="title">
+                <span class="sort-check">✓</span>
+                <span class="sort-name">Title</span>
+              </div>
+              <div class="sort-item" data-sort="duration">
+                <span class="sort-check">✓</span>
+                <span class="sort-name">Duration</span>
+              </div>
+              <div class="sort-item" data-sort="filesize">
+                <span class="sort-check">✓</span>
+                <span class="sort-name">File Size</span>
+              </div>
+              <div class="sort-item" data-sort="bitrate">
+                <span class="sort-check">✓</span>
+                <span class="sort-name">Bitrate</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-ghost mono" id="clearHistoryBtn">
+            <span class="lbl-dev">[PURGE_ALL]</span>
+            <span class="lbl-normal">Hapus Riwayat</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-inner-content">
+        <div class="history-list" id="historyList">
+          <div class="empty-state mono" id="emptyHistoryMsg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span class="lbl-dev">// NO_ENTRIES_IN_LEDGER. ENTER_URI_TO_BEGIN();</span>
+            <span class="lbl-normal">Belum ada riwayat unduhan. Masukkan tautan video untuk memulai.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <div class="footer-brand">
+          <span class="footer-title">Studio Download</span>
+          <span class="mono footer-version" data-i18n="brand_version">v1.0</span>
+        </div>
+        <div class="footer-credit">
+          <span data-i18n="made_by">Dibuat oleh</span>
+          <a href="https://www.tiktok.com/@em.n.ef" target="_blank" rel="noopener noreferrer" class="author-tag" title="TikTok @em.n.ef">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
+            </svg>
+            <span>@em.n.ef</span>
+          </a>
+        </div>
+      </div>
+      <div class="footer-right">
+        <a href="https://sociabuzz.com/emef/tribe" target="_blank" rel="noopener noreferrer" class="footer-action-btn support-action-btn" title="Dukung Creator di Sociabuzz">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span data-i18n="support_creator">Dukung di Sociabuzz</span>
+        </a>
+        <a href="https://github.com/EmFaisal-code/Studio-Download" target="_blank" rel="noopener noreferrer" class="footer-action-btn update-action-btn" title="Cek Pembaruan di GitHub">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+          <span data-i18n="check_updates">Cek Update</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Settings Modal (Config Dialog) -->
+  <div class="modal-backdrop" id="settingsModal" style="display: none;">
+    <div class="modal-dialog">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot t-dot-red"></span>
+          <span class="t-dot t-dot-yellow"></span>
+          <span class="t-dot t-dot-green"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <span class="lbl-dev">engine_config.json</span>
+          <span class="lbl-normal">Pengaturan Studio</span>
+        </div>
+        <button class="modal-close-btn" id="closeSettingsBtn" title="Tutup" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Settings Tab Navigation -->
+      <div class="settings-nav-tabs mono">
+        <button type="button" class="settings-nav-tab active" data-tab="downloads" id="tabBtnDownloads">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span class="lbl-dev">[01] ENGINE_&amp;_LIMITS</span>
+          <span class="lbl-normal">Unduhan &amp; Limit</span>
+        </button>
+        <button type="button" class="settings-nav-tab" data-tab="auth" id="tabBtnAuth">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span class="lbl-dev">[02] AUTH_COOKIES</span>
+          <span class="lbl-normal" data-i18n="tab_auth">Autentikasi YouTube</span>
+        </button>
+        <button type="button" class="settings-nav-tab" data-tab="appearance" id="tabBtnAppearance">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+          </svg>
+          <span class="lbl-dev">[03] THEME_UI</span>
+          <span class="lbl-normal">Tema Tampilan</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- TAB 1: ENGINE & DOWNLOAD LIMITS -->
+        <div class="settings-tab-content" id="tabContentDownloads">
+          <div class="setting-group">
+            <label class="mono" for="downloadDirInput">
+              <span class="lbl-dev">STORAGE_DIRECTORY_PATH:</span>
+              <span class="lbl-normal">Folder Penyimpanan:</span>
+            </label>
+            <div class="path-box">
+              <input type="text" id="downloadDirInput" class="input-field mono"
+                placeholder="C:\Users\...\Downloads\StudioDownload">
+              <button class="btn btn-secondary mono" id="openSettingsDirBtn">
+                <span class="lbl-dev">OPEN</span>
+                <span class="lbl-normal">Buka Folder</span>
+              </button>
+            </div>
+            <p class="setting-hint mono">
+              <span class="lbl-dev">// File output disimpan otomatis di direktori lokal ini.</span>
+              <span class="lbl-normal">File hasil unduhan disimpan otomatis di folder ini.</span>
+            </p>
+          </div>
+
+          <!-- 2-Column Grid for Container & Concurrency -->
+          <div class="settings-grid-2col">
+            <div class="setting-group">
+              <label class="mono" for="defaultFormatSelect">
+                <span class="lbl-dev">DEFAULT_CONTAINER:</span>
+                <span class="lbl-normal">Format Kontainer Standar:</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="defaultFormatSelect" class="studio-select mono">
+                  <option value="mkv">MKV (Matroska Studio — Rekomendasi)</option>
+                  <option value="mp4">MP4 (MPEG-4 Universal Video)</option>
+                  <option value="mp3">MP3 (Audio Ekstraksi 320kbps)</option>
+                </select>
+                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="mono" for="maxConcurrentSelect">
+                <span class="lbl-dev">CONCURRENT_DOWNLOAD_LIMIT:</span>
+                <span class="lbl-normal">Batasan Unduhan Bersamaan:</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="maxConcurrentSelect" class="studio-select mono">
+                  <option value="1">1 Unduhan (Satu per satu / Antrean)</option>
+                  <option value="2" selected>2 Unduhan Sekaligus (Standar)</option>
+                  <option value="3">3 Unduhan Sekaligus</option>
+                  <option value="5">5 Unduhan Sekaligus</option>
+                  <option value="0">Tanpa Batas (Semua Sekaligus)</option>
+                </select>
+                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bandwidth Speed Limiter -->
+          <div class="setting-group">
+            <label class="mono" for="speedLimitSelect">
+              <span class="lbl-dev">BANDWIDTH_SPEED_LIMIT:</span>
+              <span class="lbl-normal">Limit Kecepatan Unduh (Speed Limit):</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="speedLimitSelect" class="studio-select mono">
+                <option value="0" selected>Tanpa Batas (Kecepatan Penuh / Unlimited)</option>
+                <option value="1024">1 MB/s (1,024 KB/s)</option>
+                <option value="2048">2 MB/s (2,048 KB/s)</option>
+                <option value="5120">5 MB/s (5,120 KB/s)</option>
+                <option value="10240">10 MB/s (10,240 KB/s)</option>
+                <option value="25600">25 MB/s (25,600 KB/s)</option>
+              </select>
+              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <p class="setting-hint mono">
+              <span class="lbl-dev">// Batasi kecepatan unduh yt-dlp agar koneksi internet tetap lancar.</span>
+              <span class="lbl-normal">Membatasi konsumsi bandwidth agar koneksi internet tetap lancar untuk aktivitas lain.</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 2: YOUTUBE AUTH & COOKIES -->
+        <div class="settings-tab-content" id="tabContentAuth" style="display: none;">
+          <div class="setting-group" id="cookieSettingGroup">
+            <div class="setting-header-row">
+              <label class="mono" for="cookieSourceSelect">
+                <span class="lbl-dev">YOUTUBE_AUTH_COOKIES:</span>
+                <span class="lbl-normal" data-i18n="auth_cookies_label">Autentikasi YouTube (Anti Bot):</span>
+              </label>
+              <span class="cookie-status-tag mono" id="cookieStatusTag">[STATUS: NONE]</span>
+            </div>
+
+            <div class="select-wrapper">
+              <select id="cookieSourceSelect" class="studio-select mono">
+                <option value="auto">AUTO // File cookies.txt (Rekomendasi Utama — Bebas Bot)</option>
+                <option value="browser">BROWSER // Ambil dari Browser (Membutuhkan Browser Ditutup)</option>
+                <option value="none">DISABLED // Tanpa Autentikasi</option>
+              </select>
+              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+
+            <!-- Browser Selection row (visible when browser is selected) -->
+            <div id="browserSelectRow" style="display: none; margin-top: 0.5rem;">
+              <div class="select-wrapper">
+                <select id="cookieBrowserSelect" class="studio-select mono">
+                  <option value="chrome">Google Chrome</option>
+                  <option value="edge">Microsoft Edge</option>
+                  <option value="firefox">Mozilla Firefox</option>
+                  <option value="brave">Brave Browser</option>
+                </select>
+                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+              <p class="setting-hint mono" style="color: var(--accent-danger); margin-top: 0.35rem;">
+                <span class="lbl-dev">// INFO: Chrome terbaru memproteksi DB akun (DPAPI). Gunakan opsi AUTO // File cookies.txt di bawah.</span>
+                <span class="lbl-normal">Catatan: Chrome terbaru memproteksi database akun (DPAPI). Disarankan memakai opsi file cookies.txt di bawah.</span>
+              </p>
+            </div>
+
+            <!-- Step-by-Step Instructions Box -->
+            <div class="cookie-guide-box mono">
+              <div class="guide-title">
+                <span class="lbl-dev">// CARA MELEWATI BOT CHECK YOUTUBE (30 DETIK):</span>
+                <span class="lbl-normal" data-i18n="auth_guide_title">Cara Mengatasi Bot Check YouTube (30 Detik):</span>
+              </div>
+              <ol class="guide-steps">
+                <li>
+                  <span class="step-num">[1]</span>
+                  <span>Pasang ekstensi Chrome: <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener" class="guide-link">Get cookies.txt LOCALLY ↗</a></span>
+                </li>
+                <li>
+                  <span class="step-num">[2]</span>
+                  <span>Buka tab <strong>YouTube</strong>, klik ikon ekstensi tersebut di browser, lalu klik <strong>"Copy"</strong>.</span>
+                </li>
+                <li>
+                  <span class="step-num">[3]</span>
+                  <span>Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.</span>
+                </li>
+              </ol>
+            </div>
+
+            <!-- Quick Paste Area for cookies.txt -->
+            <div class="cookie-paste-box" id="cookiePasteBox" style="margin-top: 0.5rem;">
+              <textarea id="cookiePasteInput" class="cookie-textarea mono" rows="3"
+                placeholder="Tempel teks cookies di sini (# Netscape HTTP Cookie File...)" data-i18n-placeholder="cookies_placeholder" spellcheck="false"></textarea>
+              <div class="cookie-btn-row">
+                <button class="btn btn-secondary mono btn-small" id="saveCookiePasteBtn">
+                  <span class="lbl-dev">SAVE_COOKIES_TXT()</span>
+                  <span class="lbl-normal" data-i18n="save_cookies_btn">Simpan File Cookies</span>
+                </button>
+                <button class="btn-ghost mono btn-small" id="deleteCookieBtn" style="color:var(--accent-danger)">
+                  <span class="lbl-dev">[DELETE_COOKIES]</span>
+                  <span class="lbl-normal" data-i18n="delete_cookies_btn">Hapus Cookies</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: THEME & UI -->
+        <div class="settings-tab-content" id="tabContentAppearance" style="display: none;">
+          <div class="setting-group">
+            <label class="mono" for="themeSelect">
+              <span class="lbl-dev">UI_THEME_PROFILE:</span>
+              <span class="lbl-normal" data-i18n="theme_label">Tema Tampilan Aplikasi:</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="themeSelect" class="studio-select mono">
+                <option value="modern-yellow">Studio Modern // Kuning Modern &amp; Profesional (Rekomendasi)</option>
+                <option value="developer-zinc">Developer Dark Zinc // Terminal IDE Code Style</option>
+              </select>
+              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          <div class="setting-group" style="margin-top: 1rem;">
+            <label class="mono" for="languageSelect">
+              <span class="lbl-dev">UI_LANGUAGE_LOCALE:</span>
+              <span class="lbl-normal" data-i18n="language_label">Bahasa Antarmuka (Language):</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="languageSelect" class="studio-select mono">
+                <option value="id">🇮🇩 Bahasa Indonesia (Indonesian)</option>
+                <option value="en">🇺🇸 English (US)</option>
+              </select>
+              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <p class="setting-hint mono">
+              <span class="lbl-dev">// Language switches dynamically across all views &amp; notifications.</span>
+              <span class="lbl-normal">Teks aplikasi otomatis diperbarui secara instan.</span>
+            </p>
+          </div>
+
+          <div class="cookie-guide-box mono" style="margin-top: 0.5rem;">
+            <div class="guide-title">
+              <span class="lbl-dev">// INFORMASI PROFIL TEMA:</span>
+              <span class="lbl-normal">Karakteristik Tema:</span>
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.775rem;">
+              <li style="display: flex; gap: 0.5rem;">
+                <span style="color: #f59e0b; font-weight: 700;">●</span>
+                <div>
+                  <strong style="color: var(--text-primary);">Studio Modern (Kuning &amp; Putih):</strong>
+                  <span style="color: var(--text-muted);"> Latar putih bersih (Light Studio) dengan aksen kuning studio bertenaga, font Outfit &amp; Plus Jakarta Sans, kontras tinggi dan tampilan modern editorial.</span>
+                </div>
+              </li>
+              <li style="display: flex; gap: 0.5rem;">
+                <span style="color: #818cf8; font-weight: 700;">●</span>
+                <div>
+                  <strong style="color: var(--text-primary);">Developer Dark Zinc:</strong>
+                  <span style="color: var(--text-muted);"> Gaya konsol terminal &amp; IDE pengembang, font JetBrains Mono, syntax highlighting warna-warni ala editor kode.</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary mono" id="cancelSettingsBtn">
+          <span class="lbl-dev">CANCEL</span>
+          <span class="lbl-normal" data-i18n="cancel_settings_btn">Batal</span>
+        </button>
+        <button class="btn btn-primary mono" id="saveSettingsBtn">
+          <span class="lbl-dev">SAVE_CONFIG()</span>
+          <span class="lbl-normal" data-i18n="save_settings_btn">Simpan Pengaturan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio Custom Confirmation Modal (Alert Dialog) -->
+  <div class="modal-backdrop" id="confirmModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-dialog modal-dialog-confirm">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot t-dot-red"></span>
+          <span class="t-dot t-dot-yellow"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-danger);">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span class="lbl-dev">confirm_action.sh</span>
+          <span class="lbl-normal" id="confirmModalTitle">Konfirmasi Penghapusan</span>
+        </div>
+        <button class="modal-close-btn" id="confirmModalCloseBtn" title="Tutup" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body confirm-modal-body">
+        <div class="confirm-header-content">
+          <div class="confirm-icon-badge" id="confirmIconBadge">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </div>
+          <div class="confirm-text-group">
+            <h4 class="confirm-main-prompt" id="confirmMainPrompt">Hapus item dari riwayat unduhan?</h4>
+            <p class="confirm-sub-prompt" id="confirmSubPrompt">Tindakan ini akan menghapus entri yang dipilih dari catatan riwayat aplikasi.</p>
+          </div>
+        </div>
+
+        <!-- Target item preview card (shown when deleting single item) -->
+        <div class="confirm-item-preview" id="confirmItemPreview" style="display: none;">
+          <img class="confirm-item-thumb" id="confirmItemThumb" src="" alt="Thumbnail">
+          <div class="confirm-item-info mono">
+            <div class="confirm-item-title" id="confirmItemTitle">Video Title</div>
+            <div class="confirm-item-meta" id="confirmItemMeta">1080p • MP4 • 45.2 MB</div>
+            <div class="confirm-item-path" id="confirmItemPath" title="">C:\...</div>
+          </div>
+        </div>
+
+        <!-- Option checkbox to delete physical file on disk -->
+        <div class="confirm-option-box" id="confirmOptionBox">
+          <label class="confirm-checkbox-label">
+            <input type="checkbox" id="confirmDeleteFileCheckbox" class="confirm-checkbox-input">
+            <div class="confirm-checkbox-custom"></div>
+            <div class="confirm-checkbox-desc">
+              <div class="confirm-opt-title" id="confirmOptTitle">Hapus juga file fisik dari disk komputer</div>
+              <div class="confirm-opt-sub" id="confirmOptSub">File hasil unduhan akan dihapus permanen dari media penyimpanan Anda.</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Warning info if physical file is not found on disk -->
+        <div class="confirm-file-missing-notice mono" id="confirmFileMissingNotice" style="display: none;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>File fisik tidak ditemukan di disk (hanya menghapus entri riwayat).</span>
+        </div>
+      </div>
+
+      <div class="modal-footer confirm-modal-footer">
+        <button class="btn btn-secondary mono" id="confirmCancelBtn" type="button">
+          <span class="lbl-dev">ABORT</span>
+          <span class="lbl-normal" data-i18n="cancel_settings_btn">Batal</span>
+        </button>
+        <button class="btn btn-danger mono" id="confirmActionBtn" type="button">
+          <span class="lbl-dev" id="confirmActionBtnDev">CONFIRM_DELETE()</span>
+          <span class="lbl-normal" id="confirmActionBtnNormal" data-i18n="confirm_btn_delete">Hapus Riwayat</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-deck mono" id="toastContainer"></div>
+
+  <script src="/static/i18n.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+
+</html>

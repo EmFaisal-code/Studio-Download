@@ -1,0 +1,356 @@
+// Studio Download - Internationalization (i18n) Engine (ID / EN)
+
+const i18nData = {
+  id: {
+    // Brand & Header
+    brand_title: 'Studio Download',
+    brand_version: 'v1.0',
+    made_by: 'Dibuat oleh',
+    support_creator: 'Dukung di Sociabuzz',
+    check_updates: 'Cek Update',
+    engine_ready: 'Engine Siap',
+    engine_connecting: 'Menghubungkan...',
+    engine_offline: 'Engine Offline',
+    nav_folder: 'Folder',
+    nav_folder_title: 'Buka Folder Unduhan',
+    nav_settings: 'Pengaturan',
+    nav_settings_title: 'Pengaturan',
+    nav_lang_title: 'Ganti Bahasa (ID / EN)',
+    lang_badge: '🇮🇩 ID',
+
+    // Hero Section
+    hero_eyebrow: 'YouTube 4K 60fps Media Extractor',
+    hero_title: 'Studio',
+    hero_title_accent: 'Download',
+    hero_desc: 'Engine ekstraksi media YouTube hingga <strong>4K 60fps</strong> (VP9 / H.264) dan audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Output NLE-compatible, aman tanpa black screen di Adobe Premiere Pro & DaVinci Resolve.',
+    pill_4k: '4K 60fps & HDR',
+    pill_lossless: 'Audio Lossless 320kbps',
+    pill_nle: 'NLE Premiere & DaVinci',
+    pill_bot: 'Bypass Bot Shield',
+
+    // Input Bar
+    url_placeholder: 'Tempel tautan YouTube atau link streaming (HLS .m3u8, web video)...',
+    paste_btn: 'Tempel',
+    paste_btn_title: 'Tempel dari Clipboard',
+    analyze_btn: 'Analisis Video',
+    analyzing_btn: 'Menganalisis...',
+    url_ready_text: 'YouTube & Web Stream Ready',
+    header_referer_btn: '⚙ Header / Referer (Opsional) ▾',
+    referer_placeholder: 'Referer URL (Opsional, gunakan jika website memblokir dengan 403 Forbidden)...',
+
+    // Analysis / Format Card
+    manifest_title: 'Pilihan Format Unduhan',
+    status_ready_dl: '● Siap Diunduh',
+    custom_title_placeholder: 'Nama file video...',
+    custom_title_title: 'Klik untuk mengubah nama file sebelum mengunduh',
+    filename_hint: '✏ Nama file dapat diedit langsung sebelum diunduh',
+    channel_label: 'Kanal:',
+    views_label: 'Penonton:',
+    tab_video: 'Video (+ Audio)',
+    tab_audio: 'Audio Saja',
+    tab_video_sub: 'Unduh video full resolusi dengan audio stereo sinkron',
+    tab_audio_sub: 'Ekstrak audio murni (MP3, AAC, M4A, FLAC, WAV, OPUS)',
+    format_options_title: 'Format Kontainer & Codec NLE',
+    container_label: 'Format Kontainer Video:',
+    codec_label: 'Transcode Codec (Kompatibilitas NLE):',
+    audio_container_label: 'Format Ekstrak Audio:',
+    audio_bitrate_label: 'Preset Kualitas Bitrate:',
+    start_download_btn: 'Mulai Unduh',
+    start_download_audio_btn: 'Ekstrak & Unduh Audio',
+    preparing_dl: 'Menyiapkan...',
+
+    // Tasks Section
+    active_tasks_title: 'TUGAS AKTIF',
+    status_downloading: 'Mengunduh',
+    status_merging: 'Memproses / Menggabungkan',
+    status_completed: 'Selesai',
+    status_failed: 'Gagal',
+    speed_lbl: 'Kecepatan:',
+    eta_lbl: 'Sisa Waktu:',
+    pause_btn: 'Jeda',
+    resume_btn: 'Lanjut',
+    cancel_btn: 'Batal',
+
+    // History Section
+    history_title: 'Riwayat Unduhan',
+    history_empty: 'Belum ada riwayat unduhan.',
+    sort_by: 'Urutkan:',
+    clear_history_btn: 'Bersihkan Riwayat',
+    open_file: 'Buka File',
+    open_folder: 'Buka Folder',
+    delete_history: 'Hapus',
+    sort_date_added: 'Tanggal Ditambahkan',
+    sort_date_updated: 'Tanggal Diperbarui',
+    sort_title: 'Judul',
+    sort_duration: 'Durasi',
+    sort_filesize: 'Ukuran File',
+    sort_bitrate: 'Bitrate',
+
+    // Settings Modal
+    settings_title: 'Pengaturan Studio Download',
+    tab_general: 'Umum & Unduhan',
+    tab_auth: 'Autentikasi YouTube',
+    tab_appearance: 'Tampilan & Bahasa',
+    download_dir_label: 'Direktori Penyimpanan Unduhan:',
+    open_dir_btn: 'Pilih',
+    max_concurrent_label: 'Maksimal Unduhan Bersamaan:',
+    speed_limit_label: 'Batas Kecepatan Bandwidth:',
+    theme_label: 'Tema Tampilan Aplikasi:',
+    language_label: 'Bahasa Antarmuka (Language):',
+    save_settings_btn: 'Simpan Pengaturan',
+    cancel_settings_btn: 'Batal',
+    auth_cookies_label: 'Autentikasi YouTube (Anti Bot):',
+    auth_guide_title: 'Cara Mengatasi Bot Check YouTube (30 Detik):',
+    cookie_guide_step1: 'Pasang ekstensi Chrome:',
+    cookie_guide_step2: 'Buka tab <strong>YouTube</strong>, klik ikon ekstensi tersebut di browser, lalu klik <strong>"Copy"</strong>.',
+    cookie_guide_step3: 'Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.',
+    cookies_placeholder: 'Tempel teks cookies di sini (# Netscape HTTP Cookie File...)',
+    save_cookies_btn: 'Simpan File Cookies',
+    delete_cookies_btn: 'Hapus Cookies',
+    delete_cookies_confirm: 'Yakin ingin menghapus file cookies.txt?',
+    cookie_guide_info: 'Catatan: Chrome terbaru memproteksi database akun (DPAPI). Disarankan memakai opsi file cookies.txt di bawah.',
+
+    // Confirmation Modal
+    confirm_title: 'Konfirmasi Hapus Unduhan',
+    confirm_delete_both_label: 'Hapus juga file fisik dari penyimpanan komputer',
+    confirm_delete_both_desc: 'File video/audio asli di hard disk akan ikut dihapus secara permanen.',
+    confirm_file_missing: 'Catatan: File fisik di disk sudah tidak ditemukan.',
+    confirm_btn_delete: 'Hapus',
+    confirm_btn_cancel: 'Batal',
+
+    // Toast Messages
+    toast_url_empty: 'Silakan masukkan tautan video YouTube atau stream terlebih dahulu.',
+    toast_analyzing: 'Menganalisis informasi media...',
+    toast_stream_received: '⚡ Aliran stream diterima dari ekstensi!',
+    toast_download_started: 'Tugas unduhan telah ditambahkan!',
+    toast_download_completed: 'Unduhan selesai!',
+    toast_download_failed: 'Unduhan gagal.',
+    toast_settings_saved: 'Pengaturan berhasil disimpan!',
+    toast_cookies_saved: 'File cookies berhasil disimpan!',
+    toast_cookies_deleted: 'File cookies telah dihapus.',
+    toast_history_cleared: 'Riwayat unduhan berhasil dibersihkan.',
+    toast_clipboard_empty: 'Clipboard tidak berisi teks atau URL valid.',
+    toast_folder_opened: 'Membuka folder unduhan...'
+  },
+
+  en: {
+    // Brand & Header
+    brand_title: 'Studio Download',
+    brand_version: 'v1.0',
+    made_by: 'Made by',
+    support_creator: 'Support on Sociabuzz',
+    check_updates: 'Check Updates',
+    engine_ready: 'Engine Ready',
+    engine_connecting: 'Connecting...',
+    engine_offline: 'Engine Offline',
+    nav_folder: 'Folder',
+    nav_folder_title: 'Open Download Folder',
+    nav_settings: 'Settings',
+    nav_settings_title: 'Settings',
+    nav_lang_title: 'Switch Language (EN / ID)',
+    lang_badge: '🇺🇸 EN',
+
+    // Hero Section
+    hero_eyebrow: 'YouTube 4K 60fps Media Extractor',
+    hero_title: 'Studio',
+    hero_title_accent: 'Download',
+    hero_desc: 'High-fidelity YouTube extraction engine supporting up to <strong>4K 60fps</strong> (VP9 / H.264) and audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. NLE-compatible output, safe from black screens in Adobe Premiere Pro & DaVinci Resolve.',
+    pill_4k: '4K 60fps & HDR',
+    pill_lossless: 'Audio Lossless 320kbps',
+    pill_nle: 'NLE Premiere & DaVinci',
+    pill_bot: 'Bypass Bot Shield',
+
+    // Input Bar
+    url_placeholder: 'Paste YouTube link or streaming URL (HLS .m3u8, web video)...',
+    paste_btn: 'Paste',
+    paste_btn_title: 'Paste from Clipboard',
+    analyze_btn: 'Analyze Video',
+    analyzing_btn: 'Analyzing...',
+    url_ready_text: 'YouTube & Web Stream Ready',
+    header_referer_btn: '⚙ Header / Referer (Optional) ▾',
+    referer_placeholder: 'Referer URL (Optional, use if website blocks with 403 Forbidden)...',
+
+    // Analysis / Format Card
+    manifest_title: 'Download Format Selection',
+    status_ready_dl: '● Ready to Download',
+    custom_title_placeholder: 'Video filename...',
+    custom_title_title: 'Click to edit filename before downloading',
+    filename_hint: '✏ Filename can be edited directly before download',
+    channel_label: 'Channel:',
+    views_label: 'Views:',
+    tab_video: 'Video (+ Audio)',
+    tab_audio: 'Audio Only',
+    tab_video_sub: 'Download full resolution video with synced stereo audio',
+    tab_audio_sub: 'Extract pure audio (MP3, AAC, M4A, FLAC, WAV, OPUS)',
+    format_options_title: 'Container Format & NLE Codec',
+    container_label: 'Video Container Format:',
+    codec_label: 'Transcode Codec (NLE Compatibility):',
+    audio_container_label: 'Audio Extract Format:',
+    audio_bitrate_label: 'Bitrate Quality Preset:',
+    start_download_btn: 'Start Download',
+    start_download_audio_btn: 'Extract & Download Audio',
+    preparing_dl: 'Preparing...',
+
+    // Tasks Section
+    active_tasks_title: 'ACTIVE TASKS',
+    status_downloading: 'Downloading',
+    status_merging: 'Processing / Merging',
+    status_completed: 'Completed',
+    status_failed: 'Failed',
+    speed_lbl: 'Speed:',
+    eta_lbl: 'ETA:',
+    pause_btn: 'Pause',
+    resume_btn: 'Resume',
+    cancel_btn: 'Cancel',
+
+    // History Section
+    history_title: 'Download History',
+    history_empty: 'No download history yet.',
+    sort_by: 'Sort by:',
+    clear_history_btn: 'Clear History',
+    open_file: 'Open File',
+    open_folder: 'Open Folder',
+    delete_history: 'Delete',
+    sort_date_added: 'Date Added',
+    sort_date_updated: 'Date Updated',
+    sort_title: 'Title',
+    sort_duration: 'Duration',
+    sort_filesize: 'File Size',
+    sort_bitrate: 'Bitrate',
+
+    // Settings Modal
+    settings_title: 'Studio Download Settings',
+    tab_general: 'General & Downloads',
+    tab_auth: 'YouTube Authentication',
+    tab_appearance: 'Appearance & Language',
+    download_dir_label: 'Download Storage Directory:',
+    open_dir_btn: 'Browse',
+    max_concurrent_label: 'Max Concurrent Downloads:',
+    speed_limit_label: 'Bandwidth Speed Limit:',
+    theme_label: 'Application Theme:',
+    language_label: 'Interface Language (Bahasa):',
+    save_settings_btn: 'Save Settings',
+    cancel_settings_btn: 'Cancel',
+    auth_cookies_label: 'YouTube Authentication (Anti-Bot):',
+    auth_guide_title: 'How to Bypass YouTube Bot Check (30 Seconds):',
+    cookie_guide_step1: 'Install Chrome extension:',
+    cookie_guide_step2: 'Open <strong>YouTube</strong> tab, click the extension icon in browser, then click <strong>"Copy"</strong>.',
+    cookie_guide_step3: 'Paste (Ctrl+V) cookies text into the box below, then click <strong>Save Cookies File</strong>.',
+    cookies_placeholder: 'Paste cookies text here (# Netscape HTTP Cookie File...)',
+    save_cookies_btn: 'Save Cookies File',
+    delete_cookies_btn: 'Delete Cookies',
+    delete_cookies_confirm: 'Are you sure you want to delete the cookies.txt file?',
+    cookie_guide_info: 'Note: Modern Chrome protects account DB (DPAPI). It is recommended to use the cookies.txt option below.',
+
+    // Confirmation Modal
+    confirm_title: 'Confirm Download Deletion',
+    confirm_delete_both_label: 'Also delete physical file from computer storage',
+    confirm_delete_both_desc: 'The original video/audio file on hard drive will be permanently removed.',
+    confirm_file_missing: 'Note: Physical file on disk is already missing.',
+    confirm_btn_delete: 'Delete',
+    confirm_btn_cancel: 'Cancel',
+
+    // Toast Messages
+    toast_url_empty: 'Please enter a YouTube video or stream link first.',
+    toast_analyzing: 'Analyzing media information...',
+    toast_stream_received: '⚡ Stream received from browser extension!',
+    toast_download_started: 'Download task has been queued!',
+    toast_download_completed: 'Download completed!',
+    toast_download_failed: 'Download failed.',
+    toast_settings_saved: 'Settings saved successfully!',
+    toast_cookies_saved: 'Cookies file saved successfully!',
+    toast_cookies_deleted: 'Cookies file deleted.',
+    toast_history_cleared: 'Download history cleared successfully.',
+    toast_clipboard_empty: 'Clipboard does not contain valid text or URL.',
+    toast_folder_opened: 'Opening download folder...'
+  }
+};
+
+class I18nManager {
+  constructor() {
+    this.currentLang = localStorage.getItem('studio_download_lang') || 'id';
+  }
+
+  init() {
+    this.applyLanguage(this.currentLang);
+  }
+
+  getLanguage() {
+    return this.currentLang;
+  }
+
+  setLanguage(lang) {
+    if (lang !== 'id' && lang !== 'en') return;
+    this.currentLang = lang;
+    localStorage.setItem('studio_download_lang', lang);
+    this.applyLanguage(lang);
+
+    // Sync to backend settings silently if available
+    if (window.fetch) {
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: lang })
+      }).catch(() => {});
+    }
+  }
+
+  t(key, fallback = '') {
+    const langDict = i18nData[this.currentLang] || i18nData['id'];
+    return langDict[key] || fallback || key;
+  }
+
+  applyLanguage(lang) {
+    this.currentLang = lang;
+    const dict = i18nData[lang] || i18nData['id'];
+
+    // 1. Text content / innerHTML via data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) {
+        el.innerHTML = dict[key];
+      }
+    });
+
+    // 2. Titles via data-i18n-title
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      if (dict[key]) {
+        el.setAttribute('title', dict[key]);
+      }
+    });
+
+    // 3. Placeholders via data-i18n-placeholder
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (dict[key]) {
+        el.setAttribute('placeholder', dict[key]);
+      }
+    });
+
+    // 4. Update Header Toggle Badge
+    const langBadgeNormal = document.getElementById('langBadgeNormal');
+    const langBadgeDev = document.getElementById('langBadgeDev');
+    if (langBadgeNormal) {
+      langBadgeNormal.textContent = lang === 'id' ? '🇮🇩 ID' : '🇺🇸 EN';
+    }
+    if (langBadgeDev) {
+      langBadgeDev.textContent = `LANG:${lang.toUpperCase()}`;
+    }
+
+    // 5. Update settings select if present
+    const langSelect = document.getElementById('languageSelect');
+    if (langSelect && langSelect.value !== lang) {
+      langSelect.value = lang;
+    }
+
+    // 6. Update document html lang attribute
+    document.documentElement.lang = lang;
+
+    // 7. Dispatch custom event for dynamic components (app.js)
+    window.dispatchEvent(new CustomEvent('studio_language_changed', { detail: { language: lang } }));
+  }
+}
+
+// Instantiate global singleton
+window.i18n = new I18nManager();

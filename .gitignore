@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / PyInstaller packaging
+build/
+dist/
+*.spec
+
+# User local data & sensitive information
+cookies.txt
+history.json
+settings.json
+server_error.log
+
+# Temporary test & scratch folders
+.test_temp/
+scratch/
+.tempmediaStorage/
+.system_generated/
+
+# Environments & IDEs
+.env
+.venv/
+venv/
+ENV/
+.vscode/
+.idea/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

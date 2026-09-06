@@ -1,0 +1,67 @@
+{
+   "action": {
+      "default_icon": {
+         "16": "images/icon_16.png",
+         "32": "images/icon_32.png",
+         "48": "images/icon_48.png",
+         "64": "images/icon_normal_64.png",
+         "128": "images/icon_128.png"
+      },
+      "default_title": "Studio Download"
+   },
+   "author": "Studio Download Team",
+   "background": {
+      "service_worker": "bg.js"
+   },
+   "content_scripts": [
+      {
+         "all_frames": false,
+         "exclude_matches": [
+            "https://www.hlsloader.com/*record.html*"
+         ],
+         "js": [
+            "js/content.js"
+         ],
+         "matches": [
+            "<all_urls>"
+         ],
+         "run_at": "document_start"
+      },
+      {
+         "all_frames": false,
+         "js": [
+            "js/loader.js"
+         ],
+         "matches": [
+            "https://www.hlsloader.com/*record.html*"
+         ],
+         "run_at": "document_start"
+      }
+   ],
+   "default_locale": "en",
+   "description": "Ekstensi Studio Download untuk menangkap streaming HLS, m3u8, dan video web langsung ke software desktop Studio Download.",
+   "author": "@em.n.ef",
+   "homepage_url": "https://github.com/EmFaisal-code/Studio-Download",
+   "host_permissions": [
+      "<all_urls>"
+   ],
+   "icons": {
+      "16": "images/icon_16.png",
+      "32": "images/icon_32.png",
+      "48": "images/icon_48.png",
+      "64": "images/icon_normal_64.png",
+      "128": "images/icon_128.png"
+   },
+   "manifest_version": 3,
+   "name": "Studio Download",
+   "permissions": [
+      "webRequest",
+      "declarativeNetRequest",
+      "webNavigation",
+      "tabs",
+      "scripting",
+      "offscreen",
+      "storage"
+   ],
+   "version": "1.0"
+}
