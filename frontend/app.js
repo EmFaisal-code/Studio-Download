@@ -1547,7 +1547,18 @@ function openWhoAreYouModal(isEditing = false) {
 
   if (isEditing && window._currentUserProfile) {
     if (inputName) inputName.value = window._currentUserProfile.username || '';
-    if (inputRole) inputRole.value = window._currentUserProfile.role || 'Video Editor (Premiere / DaVinci)';
+    if (inputRole) {
+      const r = window._currentUserProfile.role || '';
+      let matched = false;
+      for (let i = 0; i < inputRole.options.length; i++) {
+        if (inputRole.options[i].value === r || (r.includes('Editor') && inputRole.options[i].value.includes('Editor')) || (r.includes('Creator') && inputRole.options[i].value.includes('Creator')) || (r.includes('Student') && inputRole.options[i].value.includes('Student')) || (r.includes('Developer') && inputRole.options[i].value.includes('Developer')) || (r.includes('Media') && inputRole.options[i].value.includes('Media'))) {
+          inputRole.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) inputRole.value = r || 'Video Editor (Adobe / DaVinci / dll)';
+    }
     if (inputContact) inputContact.value = window._currentUserProfile.contact || '';
   }
 
@@ -1574,7 +1585,7 @@ async function handleWhoAreYouSubmit() {
     return;
   }
 
-  const role = inputRole ? inputRole.value : 'Video Editor (Premiere / DaVinci)';
+  const role = inputRole ? inputRole.value : 'Video Editor (Adobe / DaVinci / dll)';
   const contact = inputContact ? inputContact.value.trim() : '';
 
   try {
