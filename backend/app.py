@@ -13,7 +13,11 @@ from pydantic import BaseModel
 
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.config import get_settings, save_settings, get_app_dir, get_bundle_dir
+import uuid
+import platform
+from datetime import datetime
+
+from backend.config import get_settings, save_settings, get_app_dir, get_bundle_dir, get_users_registry, save_user_to_registry
 from backend.parser import parse_url
 from backend.history import get_history, delete_history_entry, clear_all_history
 from backend.downloader import download_manager, subscribe_progress, unsubscribe_progress, active_tasks
@@ -99,6 +103,11 @@ class CookiePasteRequest(BaseModel):
 class PathActionRequest(BaseModel):
     filepath: Optional[str] = None
     directory: Optional[str] = None
+
+class UserRegisterRequest(BaseModel):
+    username: str
+    role: Optional[str] = "Editor / Creator"
+    contact: Optional[str] = ""
 
 class RemoteStreamRequest(BaseModel):
     url: str
@@ -303,6 +312,103 @@ async def api_open_file(req: PathActionRequest):
         raise HTTPException(status_code=404, detail="File tidak ditemukan di disk.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def resolve_extension_dir() -> Path:
+    """Finds the browser extension directory across dev and portable builds."""
+    # 1. Check extra/ in BASE_DIR
+    p1 = BASE_DIR / "extra"
+    if p1.exists() and (p1 / "manifest.json").exists():
+        return p1
+    # 2. Check Extension/ in BASE_DIR (portable build)
+    p2 = BASE_DIR / "Extension"
+    if p2.exists() and (p2 / "manifest.json").exists():
+        return p2
+    # 3. Check BUNDLE_DIR / extra
+    p3 = BUNDLE_DIR / "extra"
+    if p3.exists() and (p3 / "manifest.json").exists():
+        return p3
+    return BASE_DIR / "extra"
+
+@app.get("/api/extension/info")
+async def api_extension_info():
+    ext_dir = resolve_extension_dir()
+    exists = ext_dir.exists() and (ext_dir / "manifest.json").exists()
+    return {
+        "path": os.path.normpath(str(ext_dir)),
+        "exists": exists,
+        "version": "1.0",
+        "install_url": "chrome://extensions"
+    }
+
+@app.post("/api/extension/open")
+async def api_extension_open():
+    ext_dir = resolve_extension_dir()
+    if not ext_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Folder ekstensi tidak ditemukan: {ext_dir}")
+    norm_path = os.path.normpath(str(ext_dir))
+    try:
+        subprocess.Popen(f'explorer "{norm_path}"')
+        return {"status": "ok", "path": norm_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user/current")
+async def api_get_current_user():
+    settings = get_settings()
+    profile = settings.get("user_profile")
+    users = get_users_registry()
+    return {
+        "registered": bool(profile and profile.get("username")),
+        "profile": profile,
+        "total_users_count": len(users)
+    }
+
+@app.post("/api/user/register")
+async def api_register_user(req: UserRegisterRequest):
+    username = req.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username / nama wajib diisi.")
+    
+    settings = get_settings()
+    existing_profile = settings.get("user_profile") or {}
+    
+    user_id = existing_profile.get("user_id") or f"usr_{uuid.uuid4().hex[:8]}"
+    registered_at = existing_profile.get("registered_at") or datetime.now().isoformat()
+    
+    profile = {
+        "user_id": user_id,
+        "username": username,
+        "role": req.role or "Editor / Creator",
+        "contact": (req.contact or "").strip(),
+        "registered_at": registered_at,
+        "app_version": "v1.0",
+        "platform": f"{platform.system()} {platform.release()}",
+        "last_active": datetime.now().isoformat()
+    }
+    
+    # Save into settings.json
+    save_settings({"user_profile": profile})
+    # Save into users.json registry
+    save_user_to_registry(profile)
+    
+    return {
+        "status": "ok",
+        "profile": profile,
+        "total_users": len(get_users_registry())
+    }
+
+@app.get("/api/admin/users")
+async def api_admin_users():
+    users = get_users_registry()
+    history = get_history()
+    settings = get_settings()
+    return {
+        "total_users": len(users),
+        "users": users,
+        "current_user": settings.get("user_profile"),
+        "total_downloads": len(history),
+        "app_version": "v1.0"
+    }
 
 @app.websocket("/ws/progress")
 async def websocket_endpoint(websocket: WebSocket):

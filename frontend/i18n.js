@@ -106,9 +106,30 @@ const i18nData = {
     cookie_guide_step3: 'Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.',
     cookies_placeholder: 'Tempel teks cookies di sini (# Netscape HTTP Cookie File...)',
     save_cookies_btn: 'Simpan File Cookies',
-    delete_cookies_btn: 'Hapus Cookies',
     delete_cookies_confirm: 'Yakin ingin menghapus file cookies.txt?',
     cookie_guide_info: 'Catatan: Chrome terbaru memproteksi database akun (DPAPI). Disarankan memakai opsi file cookies.txt di bawah.',
+
+    // Browser Extension Tab in Settings
+    tab_extension: 'Ekstensi Browser',
+    ext_heading: 'Ekstensi Browser Companion (Chrome / Edge / Brave):',
+    ext_subheading: 'Tangkap link video streaming langsung dari tab browser aktif dan kirimkan otomatis ke Studio Download.',
+    open_ext_folder_btn: 'Buka Folder Ekstensi',
+    copy_path_btn: 'Salin Path',
+    ext_guide_title: 'Panduan Pemasangan Ekstensi di Chrome / Edge / Brave:',
+
+    // Who Are You (User Onboarding) & Admin Dashboard
+    who_are_you_title: 'Who are you?',
+    who_are_you_subtitle: 'Selamat datang di Studio Download! Silakan masukkan nama Anda untuk memulai sesi.',
+    username_label: 'Nama / Username:',
+    username_placeholder: 'Contoh: Alex, @editor_pro, Faisal...',
+    role_label: 'Profesi / Kategori:',
+    contact_label: 'Kontak / Sosial Media (Opsional):',
+    contact_placeholder: 'TikTok / Instagram / Email (Opsional)...',
+    start_app_btn: 'Mulai Menggunakan Studio Download',
+    user_badge_title: 'Profil Pengguna & Statistik',
+    admin_title: 'Admin Dashboard Pengguna',
+    total_users_lbl: 'Total Pengguna Terdaftar:',
+    user_id_lbl: 'ID Pengguna:',
 
     // Confirmation Modal
     confirm_title: 'Konfirmasi Hapus Unduhan',
@@ -238,9 +259,30 @@ const i18nData = {
     cookie_guide_step3: 'Paste (Ctrl+V) cookies text into the box below, then click <strong>Save Cookies File</strong>.',
     cookies_placeholder: 'Paste cookies text here (# Netscape HTTP Cookie File...)',
     save_cookies_btn: 'Save Cookies File',
-    delete_cookies_btn: 'Delete Cookies',
     delete_cookies_confirm: 'Are you sure you want to delete the cookies.txt file?',
     cookie_guide_info: 'Note: Modern Chrome protects account DB (DPAPI). It is recommended to use the cookies.txt option below.',
+
+    // Browser Extension Tab in Settings
+    tab_extension: 'Browser Extension',
+    ext_heading: 'Companion Browser Extension (Chrome / Edge / Brave):',
+    ext_subheading: 'Capture live video stream links directly from active browser tabs and forward them automatically to Studio Download.',
+    open_ext_folder_btn: 'Open Extension Folder',
+    copy_path_btn: 'Copy Path',
+    ext_guide_title: 'Installation Guide for Chrome / Edge / Brave:',
+
+    // Who Are You (User Onboarding) & Admin Dashboard
+    who_are_you_title: 'Who are you?',
+    who_are_you_subtitle: 'Welcome to Studio Download! Please enter your name or handle to begin.',
+    username_label: 'Name / Username:',
+    username_placeholder: 'e.g. Alex, @editor_pro, Faisal...',
+    role_label: 'Profession / Category:',
+    contact_label: 'Contact / Social (Optional):',
+    contact_placeholder: 'TikTok / Instagram / Email (Optional)...',
+    start_app_btn: 'Launch Studio Download',
+    user_badge_title: 'User Profile & Statistics',
+    admin_title: 'User Admin Dashboard',
+    total_users_lbl: 'Total Registered Users:',
+    user_id_lbl: 'User ID:',
 
     // Confirmation Modal
     confirm_title: 'Confirm Download Deletion',

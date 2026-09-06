@@ -12,6 +12,7 @@ dist/
 cookies.txt
 history.json
 settings.json
+users.json
 server_error.log
 
 # Temporary test & scratch folders

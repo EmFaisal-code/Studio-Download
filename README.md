@@ -60,16 +60,15 @@ python main.py --browser
 
 ---
 
-## 🧩 Memasang Ekstensi Browser Chrome (v1.0)
+## 🧩 Memasang Ekstensi Browser (v1.0)
 
-Studio Download dilengkapi ekstensi browser pendamping yang berada di folder `2.2.9_0/` (atau di folder `Extension/` pada versi portable):
+Studio Download dilengkapi ekstensi browser pendamping yang berada di folder `extra/` (atau di folder `Extension/` pada versi portable):
 
-1. Buka browser **Google Chrome**, **Brave**, atau **Microsoft Edge**.
-2. Masuk ke halaman ekstensi: `chrome://extensions`.
-3. Aktifkan **Developer mode** (Mode pengembang) di pojok kanan atas.
-4. Klik tombol **Load unpacked** (Muat yang belum dibongkar).
-5. Pilih folder `2.2.9_0` dari repositori ini (atau folder `Extension` pada versi portable).
-6. Ekstensi **Studio Download Extension v1.0** siap digunakan untuk menangkap video stream secara otomatis!
+### Cara Cepat via Software (Rekomendasi):
+1. Buka menu **Pengaturan** (`CONFIG`) di pojok kanan atas software.
+2. Buka tab **[04] Ekstensi Browser**.
+3. Klik tombol **"Buka Folder Ekstensi"** (otomatis membuka lokasi `extra` di Windows Explorer).
+4. Di Google Chrome / Brave / Edge, buka `chrome://extensions`, aktifkan **Developer mode**, lalu klik **Load unpacked** dan pilih folder `extra` tersebut!
 
 ---
 
@@ -78,7 +77,7 @@ Studio Download dilengkapi ekstensi browser pendamping yang berada di folder `2.
 Pengguna dapat selalu memperbarui software ke versi terbaru secara mandiri melalui:
 
 1. **Melalui Tombol di Aplikasi**:
-   - Klik tombol **GitHub** di header aplikasi atau tombol **Cek Update** di footer aplikasi untuk langsung diarahkan ke halaman rilis repositori.
+   - Klik tombol **GitHub** di header aplikasi atau tombol **Cek Update** di footer aplikasi untuk langsung diarahkan ke halaman rilis: [https://github.com/EmFaisal-code/Studio-Download/releases](https://github.com/EmFaisal-code/Studio-Download/releases)
 2. **Melalui Halaman Rilis GitHub**:
    - Kunjungi: **[https://github.com/EmFaisal-code/Studio-Download/releases](https://github.com/EmFaisal-code/Studio-Download/releases)**
    - Unduh zip versi rilis terbaru, ekstrak, dan jalankan `StudioDownload.exe`.
@@ -93,19 +92,19 @@ Pengguna dapat selalu memperbarui software ke versi terbaru secara mandiri melal
 
 ```
 Studio-Download/
-├── 2.2.9_0/                 # Ekstensi Chrome pendamping (v1.0)
+├── extra/                  # Ekstensi browser Chrome / Edge pendamping (v1.0)
 │   ├── manifest.json       # Manifest v3 ekstensi
-│   ├── background.js       # Background service worker & IPC
-│   ├── popup.html/js       # Tampilan pop-up capture ekstensi
-│   └── images/             # Ikon ekstensi tema Studio Download
+│   ├── bg.js               # Background service worker & IPC
+│   ├── images/             # Ikon ekstensi tema Studio Download
+│   └── js/                 # Content scripts & capture hooks
 ├── backend/                # Backend Core Engine (FastAPI & yt-dlp)
 │   ├── app.py              # REST API & WebSocket server
 │   ├── downloader.py       # Engine unduhan multi-thread & muxer FFmpeg
 │   ├── parser.py           # Parser metadata, format, dan playlist
-│   ├── config.py           # Konfigurasi sistem & folder penyimpanan
+│   ├── config.py           # Konfigurasi sistem & user profile registry
 │   └── history.py          # Manajemen riwayat unduhan
 ├── frontend/               # UI Antarmuka Aplikasi Desktop
-│   ├── index.html          # Halaman utama aplikasi
+│   ├── index.html          # Halaman utama aplikasi & modal dialogs
 │   ├── style.css           # Styling IDE minimalism & Cyber Yellow
 │   ├── app.js              # Logika frontend & real-time monitoring
 │   ├── i18n.js             # Engine multibahasa (ID & EN)
@@ -126,7 +125,7 @@ Jika Anda merasa Studio Download bermanfaat untuk kebutuhan konten dan editing A
 
 - 💸 **SociaBuzz Tribe**: [https://sociabuzz.com/emef/tribe](https://sociabuzz.com/emef/tribe)
 - 📱 **TikTok**: [@em.n.ef](https://www.tiktok.com/@em.n.ef)
-- 💻 **GitHub**: [EmFaisal-code/Studio-Download](https://github.com/EmFaisal-code/Studio-Download)
+- 💻 **GitHub Releases**: [https://github.com/EmFaisal-code/Studio-Download/releases](https://github.com/EmFaisal-code/Studio-Download/releases)
 
 ---
 

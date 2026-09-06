@@ -41,7 +41,7 @@
    "default_locale": "en",
    "description": "Ekstensi Studio Download untuk menangkap streaming HLS, m3u8, dan video web langsung ke software desktop Studio Download.",
    "author": "@em.n.ef",
-   "homepage_url": "https://github.com/EmFaisal-code/Studio-Download",
+   "homepage_url": "https://github.com/EmFaisal-code/Studio-Download/releases",
    "host_permissions": [
       "<all_urls>"
    ],

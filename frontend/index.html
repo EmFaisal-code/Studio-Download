@@ -51,13 +51,22 @@
           <span class="lbl-normal" data-i18n="nav_folder">Folder</span>
         </button>
 
-        <a href="https://github.com/EmFaisal-code/Studio-Download" target="_blank" rel="noopener noreferrer" class="nav-btn" id="repoBtn" title="GitHub Repository & Updates">
+        <a href="https://github.com/EmFaisal-code/Studio-Download/releases" target="_blank" rel="noopener noreferrer" class="nav-btn" id="repoBtn" title="GitHub Releases & Updates">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
           </svg>
-          <span class="lbl-dev mono">REPO</span>
+          <span class="lbl-dev mono">RELEASES</span>
           <span class="lbl-normal">GitHub</span>
         </a>
+
+        <button class="nav-btn" id="userProfileBtn" data-i18n-title="user_badge_title" title="Profil Pengguna & Admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="lbl-dev mono" id="userBadgeDev">USER</span>
+          <span class="lbl-normal" id="userBadgeNormal">Pengguna</span>
+        </button>
 
         <button class="nav-btn" id="langToggleBtn" data-i18n-title="nav_lang_title" title="Ganti Bahasa (ID / EN)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -465,7 +474,7 @@
           </svg>
           <span data-i18n="support_creator">Dukung di Sociabuzz</span>
         </a>
-        <a href="https://github.com/EmFaisal-code/Studio-Download" target="_blank" rel="noopener noreferrer" class="footer-action-btn update-action-btn" title="Cek Pembaruan di GitHub">
+        <a href="https://github.com/EmFaisal-code/Studio-Download/releases" target="_blank" rel="noopener noreferrer" class="footer-action-btn update-action-btn" title="Cek Pembaruan di GitHub Releases">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
           </svg>
@@ -523,6 +532,15 @@
           </svg>
           <span class="lbl-dev">[03] THEME_UI</span>
           <span class="lbl-normal">Tema Tampilan</span>
+        </button>
+        <button type="button" class="settings-nav-tab" data-tab="extension" id="tabBtnExtension">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          <span class="lbl-dev">[04] EXTENSION</span>
+          <span class="lbl-normal" data-i18n="tab_extension">Ekstensi Browser</span>
         </button>
       </div>
 
@@ -760,6 +778,75 @@
             </ul>
           </div>
         </div>
+
+        <!-- TAB 4: COMPANION BROWSER EXTENSION -->
+        <div class="settings-tab-content" id="tabContentExtension" style="display: none;">
+          <div class="setting-group">
+            <div class="setting-header-row">
+              <label class="mono">
+                <span class="lbl-dev">STUDIO_DOWNLOAD_EXTENSION_V1.0:</span>
+                <span class="lbl-normal" data-i18n="ext_heading">Ekstensi Browser Companion (Chrome / Edge / Brave):</span>
+              </label>
+              <span class="cookie-status-tag mono" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">[READY v1.0]</span>
+            </div>
+            <p class="setting-hint mono" style="margin-bottom: 0.85rem;">
+              <span class="lbl-dev">// Tangkap aliran video streaming &amp; kirimkan langsung ke software desktop Studio Download.</span>
+              <span class="lbl-normal" data-i18n="ext_subheading">Tangkap link video streaming langsung dari tab browser aktif dan kirimkan otomatis ke Studio Download.</span>
+            </p>
+
+            <!-- Path & Open Folder Action -->
+            <div class="path-box">
+              <input type="text" id="extensionDirPathInput" class="input-field mono" readonly value="D:\Project\YT\extra">
+              <button class="btn btn-primary mono" id="openExtensionFolderBtn" type="button">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span class="lbl-dev">OPEN_EXTRA_FOLDER()</span>
+                <span class="lbl-normal" data-i18n="open_ext_folder_btn">Buka Folder Ekstensi</span>
+              </button>
+              <button class="btn btn-secondary mono" id="copyExtensionPathBtn" type="button" title="Salin Path Folder">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span class="lbl-dev">COPY</span>
+                <span class="lbl-normal" data-i18n="copy_path_btn">Salin Path</span>
+              </button>
+            </div>
+
+            <!-- Step-by-Step Installation Instructions -->
+            <div class="cookie-guide-box mono" style="margin-top: 1rem;">
+              <div class="guide-title">
+                <span class="lbl-dev">// CARA PASANG EKSTENSI DI BROWSER (3 LANGKAH):</span>
+                <span class="lbl-normal" data-i18n="ext_guide_title">Panduan Pemasangan Ekstensi di Chrome / Edge / Brave:</span>
+              </div>
+              <ol class="guide-steps">
+                <li>
+                  <span class="step-num">[1]</span>
+                  <span>Buka tab baru di browser Anda dan buka alamat: <code class="guide-code">chrome://extensions</code> (atau <code class="guide-code">edge://extensions</code> pada Edge).</span>
+                </li>
+                <li>
+                  <span class="step-num">[2]</span>
+                  <span>Aktifkan toggle <strong>Developer mode</strong> (Mode pengembang) di sudut kanan atas halaman ekstensi browser.</span>
+                </li>
+                <li>
+                  <span class="step-num">[3]</span>
+                  <span>Klik tombol <strong>"Load unpacked"</strong> (Muat yang belum dibongkar), lalu pilih folder <strong>extra</strong> (<code class="guide-code" id="extPathSnippet">D:\Project\YT\extra</code>).</span>
+                </li>
+              </ol>
+              <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted);">💡 Setelah terpasang, cukup klik ikon Studio Download saat menonton streaming di tab browser.</span>
+                <button class="btn btn-secondary btn-small mono" id="openBrowserExtensionsPageBtn" type="button">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span class="lbl-normal">Salin chrome://extensions</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary mono" id="cancelSettingsBtn">
@@ -858,6 +945,154 @@
           <span class="lbl-dev" id="confirmActionBtnDev">CONFIRM_DELETE()</span>
           <span class="lbl-normal" id="confirmActionBtnNormal" data-i18n="confirm_btn_delete">Hapus Riwayat</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Who Are You (User Onboarding & Identity) Modal -->
+  <div class="modal-backdrop" id="whoAreYouModal" style="display: none;" data-mandatory="true">
+    <div class="modal-dialog who-are-you-dialog" style="max-width: 480px;">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot t-dot-red"></span>
+          <span class="t-dot t-dot-yellow"></span>
+          <span class="t-dot t-dot-green"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <span class="lbl-dev">identity_handshake.sh</span>
+          <span class="lbl-normal">Selamat Datang</span>
+        </div>
+      </div>
+
+      <div class="modal-body" style="padding: 1.75rem 1.5rem 1.25rem;">
+        <div style="text-align: center; margin-bottom: 1.25rem;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 12px; background: rgba(250, 204, 21, 0.1); border: 1px solid rgba(250, 204, 21, 0.3); margin-bottom: 0.75rem; box-shadow: 0 0 20px rgba(250,204,21,0.2);">
+            <img src="/static/icon.png" alt="Studio Download" width="32" height="32" style="border-radius: 6px;">
+          </div>
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0 0 0.4rem 0; color: var(--text-primary);" data-i18n="who_are_you_title">Who are you?</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.45;" data-i18n="who_are_you_subtitle">
+            Selamat datang di Studio Download! Silakan masukkan nama Anda untuk memulai sesi.
+          </p>
+        </div>
+
+        <form id="whoAreYouForm" onsubmit="return false;">
+          <div class="setting-group" style="margin-bottom: 1rem;">
+            <label class="mono" for="onboardingUsername" style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem; display: flex; justify-content: space-between;">
+              <span data-i18n="username_label">Nama / Username:</span>
+              <span style="color: var(--accent-danger); font-size: 0.7rem;">*Wajib</span>
+            </label>
+            <input type="text" id="onboardingUsername" class="input-field mono" placeholder="Contoh: Alex, @editor_pro, Faisal..." required autofocus style="font-size: 0.9rem; padding: 0.65rem 0.85rem;">
+          </div>
+
+          <div class="setting-group" style="margin-bottom: 1rem;">
+            <label class="mono" for="onboardingRole" style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem; display: block;" data-i18n="role_label">
+              Profesi / Kategori:
+            </label>
+            <div class="select-wrapper">
+              <select id="onboardingRole" class="studio-select mono">
+                <option value="Video Editor (Premiere / DaVinci)">🎬 Video Editor (Premiere / DaVinci)</option>
+                <option value="Content Creator (YouTube / TikTok)">📱 Content Creator (YouTube / TikTok)</option>
+                <option value="Student / Pelajar">🎓 Student / Pelajar</option>
+                <option value="Software Developer / Engineer">💻 Software Developer / Engineer</option>
+                <option value="Casual Media Enthusiast">🎧 Penikmat Musik &amp; Video</option>
+                <option value="Lainnya">✨ Lainnya</option>
+              </select>
+              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <div class="setting-group" style="margin-bottom: 1.25rem;">
+            <label class="mono" for="onboardingContact" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem; display: block;" data-i18n="contact_label">
+              Kontak / Sosial Media (Opsional):
+            </label>
+            <input type="text" id="onboardingContact" class="input-field mono" placeholder="TikTok / Instagram / Email (Opsional)..." style="font-size: 0.825rem; padding: 0.55rem 0.85rem;">
+          </div>
+
+          <button type="submit" class="btn btn-primary mono" id="submitWhoAreYouBtn" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.85rem; font-weight: 700;">
+            <span class="lbl-dev">INIT_IDENTITY() &rarr;</span>
+            <span class="lbl-normal" data-i18n="start_app_btn">Mulai Menggunakan Studio Download</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile & Admin Dashboard Modal -->
+  <div class="modal-backdrop" id="adminDashboardModal" style="display: none;">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot t-dot-red"></span>
+          <span class="t-dot t-dot-yellow"></span>
+          <span class="t-dot t-dot-green"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <span class="lbl-dev">admin_dashboard.sys</span>
+          <span class="lbl-normal" data-i18n="admin_title">Admin Dashboard Pengguna</span>
+        </div>
+        <button class="modal-close-btn" id="closeAdminDashboardBtn" title="Tutup" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+        <!-- Current Profile Card -->
+        <div class="admin-profile-card">
+          <div class="admin-profile-avatar">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="admin-profile-info">
+            <div class="admin-profile-name" id="adminCurrentUsername">Loading...</div>
+            <div class="admin-profile-meta mono">
+              <span id="adminCurrentRole">Editor</span> • <span id="adminCurrentUserId">usr_...</span>
+            </div>
+            <div class="admin-profile-contact mono" id="adminCurrentContact" style="display: none; font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;"></div>
+          </div>
+          <button class="btn btn-secondary btn-small mono" id="editProfileBtn" style="margin-left: auto;">
+            <span>Ganti Nama</span>
+          </button>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="admin-stats-grid mono">
+          <div class="admin-stat-box">
+            <div class="stat-num" id="adminStatTotalUsers">1</div>
+            <div class="stat-lbl" data-i18n="total_users_lbl">Total Pengguna</div>
+          </div>
+          <div class="admin-stat-box">
+            <div class="stat-num" id="adminStatTotalDownloads">0</div>
+            <div class="stat-lbl">Total Riwayat</div>
+          </div>
+          <div class="admin-stat-box">
+            <div class="stat-num" style="color: var(--syntax-string);">v1.0</div>
+            <div class="stat-lbl">Versi Engine</div>
+          </div>
+        </div>
+
+        <!-- Registered Users Ledger -->
+        <div style="margin-top: 1.25rem;">
+          <div style="font-size: 0.775rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+            <span class="mono lbl-dev">// REGISTERED_USERS_LEDGER</span>
+            <span class="lbl-normal">Daftar Pengguna Terdaftar</span>
+            <span class="mono" id="adminUserCountBadge" style="font-size: 0.7rem; color: var(--syntax-num); background: var(--bg-surface-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">1 USER</span>
+          </div>
+          <div class="admin-user-list mono" id="adminUserListContainer">
+            <!-- Dynamically populated user list -->
+          </div>
+        </div>
+
+        <div class="cookie-guide-box mono" style="margin-top: 1rem; font-size: 0.725rem;">
+          <span style="color: var(--syntax-num); font-weight: 700;">[ADMIN DASHBOARD]:</span>
+          <span> Data pengguna ini tersimpan di <code class="guide-code">users.json</code> untuk keperluan admin dashboard dan analitik pengguna Studio Download mendatang.</span>
+        </div>
       </div>
     </div>
   </div>

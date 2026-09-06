@@ -17,6 +17,7 @@ def get_bundle_dir() -> Path:
 
 BASE_DIR = get_app_dir()
 SETTINGS_FILE = BASE_DIR / "settings.json"
+USERS_FILE = BASE_DIR / "users.json"
 DEFAULT_DOWNLOAD_DIR = Path.home() / "Downloads" / "StudioDownload"
 DEFAULT_COOKIE_FILE = BASE_DIR / "cookies.txt"
 
@@ -33,8 +34,38 @@ DEFAULT_SETTINGS = {
     "theme": "modern-yellow",       # "modern-yellow", "developer-zinc"
     "language": "id",               # "id" (Bahasa Indonesia), "en" (English)
     "max_concurrent_downloads": 2,  # 0 = unlimited, 1, 2, 3, 5
-    "download_speed_limit": 0       # 0 = unlimited, in KB/s (e.g. 1024, 2048, 5120)
+    "download_speed_limit": 0,      # 0 = unlimited, in KB/s (e.g. 1024, 2048, 5120)
+    "user_profile": None            # None or dict: { user_id, username, role, contact, registered_at }
 }
+
+def get_users_registry():
+    """Retrieve list of registered users on this installation for admin dashboard."""
+    if not USERS_FILE.exists():
+        return []
+    try:
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def save_user_to_registry(profile: dict):
+    """Save or update user in persistent users.json registry."""
+    users = get_users_registry()
+    user_id = profile.get("user_id")
+    found = False
+    for i, u in enumerate(users):
+        if u.get("user_id") == user_id:
+            users[i] = profile
+            found = True
+            break
+    if not found:
+        users.append(profile)
+    try:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, indent=4)
+    except Exception:
+        pass
+    return users
 
 def get_settings():
     if not SETTINGS_FILE.exists():

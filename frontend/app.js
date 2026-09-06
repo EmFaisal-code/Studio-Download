@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadHistory();
   loadSettings();
   setupEventListeners();
+  checkUserProfile();
 
   // Check URL query parameters for stream auto-fill from extension
   try {
@@ -349,10 +350,53 @@ function setupEventListeners() {
   }
   if (confirmModal) {
     confirmModal.addEventListener('click', (e) => {
-      if (e.target === confirmModal) {
-        closeConfirmModal(false);
-      }
+      if (e.target === confirmModal) closeConfirmModal(false);
     });
+  }
+
+  // User Profile & Admin Dashboard
+  const userProfileBtn = document.getElementById('userProfileBtn');
+  if (userProfileBtn) {
+    userProfileBtn.addEventListener('click', openAdminDashboard);
+  }
+  const closeAdminDashboardBtn = document.getElementById('closeAdminDashboardBtn');
+  if (closeAdminDashboardBtn) {
+    closeAdminDashboardBtn.addEventListener('click', closeAdminDashboard);
+  }
+  const editProfileBtn = document.getElementById('editProfileBtn');
+  if (editProfileBtn) {
+    editProfileBtn.addEventListener('click', () => {
+      closeAdminDashboard();
+      openWhoAreYouModal(true);
+    });
+  }
+  const whoAreYouForm = document.getElementById('whoAreYouForm');
+  if (whoAreYouForm) {
+    whoAreYouForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleWhoAreYouSubmit();
+    });
+  }
+  const submitWhoAreYouBtn = document.getElementById('submitWhoAreYouBtn');
+  if (submitWhoAreYouBtn) {
+    submitWhoAreYouBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleWhoAreYouSubmit();
+    });
+  }
+
+  // Extension Settings Actions
+  const openExtensionFolderBtn = document.getElementById('openExtensionFolderBtn');
+  if (openExtensionFolderBtn) {
+    openExtensionFolderBtn.addEventListener('click', handleOpenExtensionFolder);
+  }
+  const copyExtensionPathBtn = document.getElementById('copyExtensionPathBtn');
+  if (copyExtensionPathBtn) {
+    copyExtensionPathBtn.addEventListener('click', handleCopyExtensionPath);
+  }
+  const openBrowserExtensionsPageBtn = document.getElementById('openBrowserExtensionsPageBtn');
+  if (openBrowserExtensionsPageBtn) {
+    openBrowserExtensionsPageBtn.addEventListener('click', handleCopyBrowserExtUrl);
   }
 
   // Global ESC key listener for modals
@@ -1279,7 +1323,8 @@ function switchSettingsTab(tabName) {
   const tabIdMap = {
     downloads: 'tabContentDownloads',
     auth: 'tabContentAuth',
-    appearance: 'tabContentAppearance'
+    appearance: 'tabContentAppearance',
+    extension: 'tabContentExtension'
   };
 
   contents.forEach(c => {
@@ -1291,6 +1336,7 @@ function switchSettingsTab(tabName) {
 function openSettings(defaultTab = 'downloads') {
   loadSettings();
   loadCookieStatus();
+  loadExtensionInfo();
   switchSettingsTab(defaultTab);
   settingsModal.style.display = 'flex';
 }
@@ -1452,4 +1498,217 @@ function showToast(message, type = 'info') {
     toast.style.transition = 'all 0.3s ease';
     setTimeout(() => toast.remove(), 300);
   }, 4000);
+}
+
+// --- User Profile & Onboarding Controller ("Who are you?") ---
+async function checkUserProfile() {
+  try {
+    const res = await fetch('/api/user/current');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.registered && data.profile && data.profile.username) {
+      updateUserBadge(data.profile);
+    } else {
+      openWhoAreYouModal(false);
+    }
+  } catch (err) {
+    console.warn('Failed to check user profile:', err);
+  }
+}
+
+function updateUserBadge(profile) {
+  window._currentUserProfile = profile;
+  const userBadgeNormal = document.getElementById('userBadgeNormal');
+  const userBadgeDev = document.getElementById('userBadgeDev');
+  if (userBadgeNormal && profile && profile.username) {
+    userBadgeNormal.textContent = profile.username;
+  }
+  if (userBadgeDev && profile && profile.username) {
+    const cleanHandle = profile.username.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase().slice(0, 10);
+    userBadgeDev.textContent = `USR:${cleanHandle || 'READY'}`;
+  }
+}
+
+function openWhoAreYouModal(isEditing = false) {
+  const modal = document.getElementById('whoAreYouModal');
+  if (!modal) return;
+  const inputName = document.getElementById('onboardingUsername');
+  const inputRole = document.getElementById('onboardingRole');
+  const inputContact = document.getElementById('onboardingContact');
+
+  if (isEditing && window._currentUserProfile) {
+    if (inputName) inputName.value = window._currentUserProfile.username || '';
+    if (inputRole) inputRole.value = window._currentUserProfile.role || 'Video Editor (Premiere / DaVinci)';
+    if (inputContact) inputContact.value = window._currentUserProfile.contact || '';
+  }
+
+  modal.style.display = 'flex';
+  if (inputName) {
+    setTimeout(() => inputName.focus(), 150);
+  }
+}
+
+function closeWhoAreYouModal() {
+  const modal = document.getElementById('whoAreYouModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function handleWhoAreYouSubmit() {
+  const inputName = document.getElementById('onboardingUsername');
+  const inputRole = document.getElementById('onboardingRole');
+  const inputContact = document.getElementById('onboardingContact');
+
+  const username = inputName ? inputName.value.trim() : '';
+  if (!username) {
+    showToast('Silakan masukkan nama atau username Anda.', 'error');
+    if (inputName) inputName.focus();
+    return;
+  }
+
+  const role = inputRole ? inputRole.value : 'Video Editor (Premiere / DaVinci)';
+  const contact = inputContact ? inputContact.value.trim() : '';
+
+  try {
+    const res = await fetch('/api/user/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, role, contact })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      updateUserBadge(data.profile);
+      closeWhoAreYouModal();
+      showToast(`👋 Selamat datang di Studio Download, ${username}!`, 'success');
+    } else {
+      showToast('Gagal menyimpan identitas profil.', 'error');
+    }
+  } catch (err) {
+    showToast('Terjadi kesalahan saat pendaftaran: ' + err.message, 'error');
+  }
+}
+
+// --- Admin Dashboard Controller ---
+async function openAdminDashboard() {
+  const modal = document.getElementById('adminDashboardModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  try {
+    const res = await fetch('/api/admin/users');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const nameEl = document.getElementById('adminCurrentUsername');
+    const roleEl = document.getElementById('adminCurrentRole');
+    const idEl = document.getElementById('adminCurrentUserId');
+    const contactEl = document.getElementById('adminCurrentContact');
+    const totalUsersEl = document.getElementById('adminStatTotalUsers');
+    const totalDlEl = document.getElementById('adminStatTotalDownloads');
+    const userCountBadge = document.getElementById('adminUserCountBadge');
+    const listContainer = document.getElementById('adminUserListContainer');
+
+    const cur = data.current_user || window._currentUserProfile || {};
+    if (nameEl) nameEl.textContent = cur.username || 'Pengguna Studio';
+    if (roleEl) roleEl.textContent = cur.role || 'Editor';
+    if (idEl) idEl.textContent = cur.user_id || 'ID: local';
+    if (contactEl) {
+      if (cur.contact) {
+        contactEl.style.display = 'block';
+        contactEl.textContent = `Kontak: ${cur.contact}`;
+      } else {
+        contactEl.style.display = 'none';
+      }
+    }
+
+    if (totalUsersEl) totalUsersEl.textContent = data.total_users || 1;
+    if (totalDlEl) totalDlEl.textContent = data.total_downloads || 0;
+    if (userCountBadge) userCountBadge.textContent = `${data.total_users || 1} USER`;
+
+    if (listContainer) {
+      listContainer.innerHTML = '';
+      const users = data.users || [];
+      if (users.length === 0 && cur.username) {
+        users.push(cur);
+      }
+      users.forEach(u => {
+        const item = document.createElement('div');
+        item.className = 'admin-user-item';
+        const regDate = u.registered_at ? new Date(u.registered_at).toLocaleDateString() : 'Hari ini';
+        item.innerHTML = `
+          <div>
+            <div class="admin-user-item-name">${escapeHtml(u.username || 'Anonymous')}</div>
+            <div class="admin-user-item-role">${escapeHtml(u.role || 'User')} • <span style="color:var(--text-faint)">${escapeHtml(u.user_id || '')}</span></div>
+          </div>
+          <div class="admin-user-item-date">${regDate}</div>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to load admin stats:', err);
+  }
+}
+
+function closeAdminDashboard() {
+  const modal = document.getElementById('adminDashboardModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// --- Extension Settings Actions ---
+async function loadExtensionInfo() {
+  try {
+    const res = await fetch('/api/extension/info');
+    if (!res.ok) return;
+    const data = await res.json();
+    const input = document.getElementById('extensionDirPathInput');
+    const snippet = document.getElementById('extPathSnippet');
+    if (input && data.path) input.value = data.path;
+    if (snippet && data.path) snippet.textContent = data.path;
+  } catch (e) {
+    console.warn('Failed to load extension info:', e);
+  }
+}
+
+async function handleOpenExtensionFolder() {
+  try {
+    const res = await fetch('/api/extension/open', { method: 'POST' });
+    if (res.ok) {
+      showToast('📂 Membuka folder ekstensi di Windows Explorer...', 'info');
+    } else {
+      showToast('Folder ekstensi tidak ditemukan di disk.', 'error');
+    }
+  } catch (e) {
+    showToast('Gagal membuka folder: ' + e.message, 'error');
+  }
+}
+
+function handleCopyExtensionPath() {
+  const input = document.getElementById('extensionDirPathInput');
+  const path = input ? input.value : 'D:\\Project\\YT\\extra';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(path).then(() => {
+      showToast('📋 Path folder ekstensi disalin ke clipboard!', 'success');
+    }).catch(() => {
+      showToast('Gagal menyalin path ke clipboard.', 'error');
+    });
+  }
+}
+
+function handleCopyBrowserExtUrl() {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText('chrome://extensions').then(() => {
+      showToast('📋 Alamat "chrome://extensions" disalin! Buka tab baru di browser dan tempel.', 'info');
+    });
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

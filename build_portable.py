@@ -107,10 +107,12 @@ def build():
             print(f"[*] Menyalin {dll_count} library DLL FFmpeg ke direktori portable...")
 
     # 5. Copy Companion Extension to portable directory
-    ext_src = BASE_DIR / "2.2.9_0"
+    ext_src = BASE_DIR / "extra"
+    if not ext_src.exists():
+        ext_src = BASE_DIR / "2.2.9_0"
     ext_dest = dist_dir / "Extension"
     if ext_src.exists():
-        print("[*] Menyalin Studio Download Extension ke direktori portable...")
+        print("[*] Menyalin Studio Download Extension (extra) ke direktori portable...")
         if ext_dest.exists():
             shutil.rmtree(ext_dest)
         shutil.copytree(ext_src, ext_dest)
@@ -123,12 +125,12 @@ def build():
             "================================================\n\n"
             "Made by @em.n.ef: https://www.tiktok.com/@em.n.ef\n"
             "Dukungan / Donasi: https://sociabuzz.com/emef/tribe\n"
-            "GitHub & Update: https://github.com/EmFaisal-code/Studio-Download\n\n"
+            "GitHub Releases & Update: https://github.com/EmFaisal-code/Studio-Download/releases\n\n"
             "Aplikasi ini bersifat 100% PORTABLE tanpa perlu install:\n"
             "1. Cukup double-click 'StudioDownload.exe' untuk menjalankan software.\n"
             "2. FFmpeg sudah terintegrasi langsung di folder ini.\n"
             "3. Riwayat unduhan (history.json) dan pengaturan (settings.json) tersimpan otomatis di folder ini.\n"
-            "4. Ekstensi browser ada di folder 'Extension'. Pasang di Chrome via chrome://extensions (Developer Mode -> Load Unpacked).\n"
+            "4. Ekstensi browser ada di folder 'Extension' (atau 'extra'). Pasang di Chrome via chrome://extensions (Developer Mode -> Load Unpacked).\n"
             "5. Ekstensi browser otomatis terhubung ke aplikasi saat aplikasi sedang terbuka.\n"
             "6. Untuk mengecek pembaruan versi terbaru, kunjungi: https://github.com/EmFaisal-code/Studio-Download/releases\n"
         )
