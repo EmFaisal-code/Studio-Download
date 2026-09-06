@@ -109,18 +109,16 @@ def build():
 
     # 5. Copy Companion Extension to portable directory
     ext_src = BASE_DIR / "extra"
-    if not ext_src.exists():
-        ext_src = BASE_DIR / "Extension"
     ext_dest = dist_dir / "Extension"
-    ext_dest_extra = dist_dir / "extra"
     if ext_src.exists():
         print("[*] Menyalin Studio Download Extension ke direktori portable...")
         if ext_dest.exists():
             shutil.rmtree(ext_dest)
         shutil.copytree(ext_src, ext_dest)
-        if ext_dest_extra.exists():
-            shutil.rmtree(ext_dest_extra)
-        shutil.copytree(ext_src, ext_dest_extra)
+        # Hapus folder extra lama di dist jika ada agar tidak duplikat
+        old_extra = dist_dir / "extra"
+        if old_extra.exists():
+            shutil.rmtree(old_extra)
 
     # 6. Create Portable README
     readme_path = dist_dir / "README.txt"
@@ -135,8 +133,8 @@ def build():
             "1. Cukup double-click 'StudioDownload.exe' untuk menjalankan software.\n"
             "2. FFmpeg sudah terintegrasi langsung di folder ini.\n"
             "3. Riwayat unduhan (history.json) dan pengaturan (settings.json) tersimpan otomatis di folder ini.\n"
-            "4. Ekstensi browser ada di folder 'Extension' (atau 'extra'). Pasang di Chrome via chrome://extensions (Developer Mode -> Load Unpacked).\n"
-            "5. Ekstensi browser otomatis terhubung ke aplikasi saat aplikasi sedang terbuka.\n"
+            "4. Ekstensi browser ada di folder 'Extension'. Pasang di Chrome via chrome://extensions (Developer Mode -> Load Unpacked).\n"
+            "5. Ekstensi browser otomatis menyinkronkan cookies YouTube & stream URL ke aplikasi.\n"
             "6. Untuk mengecek pembaruan versi terbaru, kunjungi: https://github.com/EmFaisal-code/Studio-Download/releases\n"
         )
 
