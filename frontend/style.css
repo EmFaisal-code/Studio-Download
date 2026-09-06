@@ -3752,7 +3752,7 @@ a.nav-btn {
 }
 
 .announcement-icon {
-  color: var(--syntax-num);
+  color: #fbbf24;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -3764,6 +3764,7 @@ a.nav-btn {
   color: #fef08a;
   line-height: 1.4;
   letter-spacing: -0.01em;
+  font-weight: 500;
 }
 
 .announcement-close {
@@ -3782,6 +3783,36 @@ a.nav-btn {
 .announcement-close:hover {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* Contrast & Typography Override for Light Themes (Modern Yellow / Cyber Yellow) */
+[data-theme="modern-yellow"] .announcement-banner,
+[data-theme="cyber-yellow"] .announcement-banner {
+  background: linear-gradient(90deg, #fef3c7, #fffbeb) !important;
+  border-bottom: 1px solid #fcd34d !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.1) !important;
+}
+
+[data-theme="modern-yellow"] .announcement-icon,
+[data-theme="cyber-yellow"] .announcement-icon {
+  color: #b45309 !important;
+}
+
+[data-theme="modern-yellow"] .announcement-text,
+[data-theme="cyber-yellow"] .announcement-text {
+  color: #78350f !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="modern-yellow"] .announcement-close,
+[data-theme="cyber-yellow"] .announcement-close {
+  color: #92400e !important;
+}
+
+[data-theme="modern-yellow"] .announcement-close:hover,
+[data-theme="cyber-yellow"] .announcement-close:hover {
+  color: #451a03 !important;
+  background: rgba(180, 83, 9, 0.15) !important;
 }
 
 @keyframes slideDownBanner {
