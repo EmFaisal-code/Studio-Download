@@ -1,0 +1,25 @@
+{
+    "download_dir": "C:\\Users\\faisa\\Downloads\\StudioDownload",
+    "default_resolution": "best",
+    "default_format": "mkv",
+    "download_subtitles": false,
+    "embed_thumbnail": true,
+    "port": 8080,
+    "cookie_source": "file",
+    "cookie_browser": "chrome",
+    "cookie_file": "D:\\Project\\YT\\dist\\StudioDownload\\cookies.txt",
+    "theme": "developer-zinc",
+    "language": "id",
+    "max_concurrent_downloads": 2,
+    "download_speed_limit": 0,
+    "user_profile": {
+        "user_id": "usr_a5a948c4",
+        "username": "@em.n.ef",
+        "role": "Video Editor (Universal)",
+        "contact": "",
+        "registered_at": "2026-09-07T03:51:59.907079",
+        "app_version": "v1.0",
+        "platform": "Windows 11",
+        "last_active": "2026-09-07T03:51:59.907134"
+    }
+}

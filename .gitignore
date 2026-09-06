@@ -1,0 +1,5 @@
+cookies.txt
+history.json
+*.log
+Thumbs.db
+.DS_Store

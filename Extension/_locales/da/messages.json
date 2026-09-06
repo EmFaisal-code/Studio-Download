@@ -1,0 +1,134 @@
+{
+   "action_button_capturing": {
+      "message": "Studio Download\n[ Optager... ]"
+   },
+   "action_button_enable": {
+      "message": "Stream fundet\n[ Klik for at downloade ]"
+   },
+   "action_button_enable_weak": {
+      "message": "Sandsynligvis downloadbar\n[ Klik for at prøve ]"
+   },
+   "action_button_loader": {
+      "message": "Indlæser..."
+   },
+   "action_button_off": {
+      "message": "Studio Download\n[ Klik for at prøve at fange videoen ]"
+   },
+   "audio": {
+      "message": "Lyd"
+   },
+   "capture_reason_1": {
+      "message": "Vil du skifte til videooptagelsestilstand?"
+   },
+   "capture_reason_2": {
+      "message": "Ingen videoindeks fundet.<br>Vil du skifte til videooptagelsestilstand?"
+   },
+   "capture_reason_3": {
+      "message": "Vil du bruge optagelsestilstand som før?"
+   },
+   "disableAdblockMessage": {
+      "message": "Downloadfejl kan også skyldes ad-blocker!<br>Vil du venligst deaktivere din ad-blocker for at støtte os i yderligere udvikling af vores service?"
+   },
+   "drm_detected": {
+      "message": "Videoen kan være beskyttet af DRM-teknologier."
+   },
+   "error_403": {
+      "message": "Adgang nægtet."
+   },
+   "error_404": {
+      "message": "Fil ikke fundet."
+   },
+   "error_408": {
+      "message": "Timeout."
+   },
+   "error_fetch": {
+      "message": "Fejlede i at hente filen."
+   },
+   "error_label": {
+      "message": "Fejl."
+   },
+   "error_no_audio": {
+      "message": "Ingen lyd."
+   },
+   "error_no_downloadable": {
+      "message": "En downloadbar video blev ikke fundet i indeksfilen."
+   },
+   "error_no_index": {
+      "message": "Der opstod en fejl under hentning af indeksfilen."
+   },
+   "error_no_video": {
+      "message": "Ingen video."
+   },
+   "error_quality_select": {
+      "message": "Der opstod en fejl ved tjek af videokvalitet."
+   },
+   "error_try_capture": {
+      "message": "Prøv <a href=\"javascript:void(0)\" class=\"tryCapture\">Optagelsesmodus</a> hvis nødvendigt."
+   },
+   "manifest_browser_action": {
+      "message": "Studio Download"
+   },
+   "manifest_description": {
+      "message": "Ekstensi Studio Download untuk menangkap streaming video web langsung ke software desktop."
+   },
+   "manifest_name": {
+      "message": "Studio Download"
+   },
+   "message_cancelled": {
+      "message": "Annulleret"
+   },
+   "message_completed": {
+      "message": "Fuldført"
+   },
+   "message_error_network": {
+      "message": "Netværksfejl"
+   },
+   "message_failed": {
+      "message": "Download mislykkedes"
+   },
+   "message_fatal": {
+      "message": "Alvorlig fejl. Desværre kan downloadet ikke genoptages. Prøv venligst igen."
+   },
+   "message_resume": {
+      "message": "Download genoptaget"
+   },
+   "quality": {
+      "message": "Kvalitet"
+   },
+   "quality_custom": {
+      "message": "Brugerdefineret"
+   },
+   "quality_high": {
+      "message": "Høj"
+   },
+   "quality_low": {
+      "message": "Lav"
+   },
+   "refer_troubleshoot": {
+      "message": "Se venligst <a href=\"#troubleshoot\">Fejlfinding</a> for detaljer."
+   },
+   "subtitle": {
+      "message": "Undertekst"
+   },
+   "title_completed": {
+      "message": "Færdig"
+   },
+   "title_loading": {
+      "message": "Indlæser"
+   },
+   "title_recording": {
+      "message": "Optager"
+   },
+   "warn_chapter_has_changed": {
+      "message": "Kapitlet i streamen er ændret, men optagelsen fortsætter."
+   },
+   "warn_chunksize_excess": {
+      "message": "Antallet af fragmenter i streamen er over NUM_CHUNKS. Gem venligst denne video med det samme og prøv at optage igen, da den muligvis ikke kan behandles yderligere."
+   },
+   "warn_discontig_fragments_found": {
+      "message": "En del af streamen mangler, men optagelsen fortsætter."
+   },
+   "webm_detected": {
+      "message": "WebM understøttes i øjeblikket ikke."
+   }
+}
