@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   checkUserProfile();
   loadExtensionInfo();
+  checkForUpdates(false);
 
   // Check URL query parameters for stream auto-fill from extension
   try {
@@ -402,6 +403,33 @@ function setupEventListeners() {
     openBrowserExtensionsPageBtn.addEventListener('click', handleCopyBrowserExtUrl);
   }
 
+  // Update Check & Remote Sync Listeners
+  const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+  if (checkUpdateBtn) {
+    checkUpdateBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      checkForUpdates(true);
+    });
+  }
+  const closeUpdateModalBtn = document.getElementById('closeUpdateModalBtn');
+  if (closeUpdateModalBtn) {
+    closeUpdateModalBtn.addEventListener('click', closeUpdateModal);
+  }
+  const dismissUpdateBtn = document.getElementById('dismissUpdateBtn');
+  if (dismissUpdateBtn) {
+    dismissUpdateBtn.addEventListener('click', closeUpdateModal);
+  }
+  const updateModal = document.getElementById('updateModal');
+  if (updateModal) {
+    updateModal.addEventListener('click', (e) => {
+      if (e.target === updateModal) closeUpdateModal();
+    });
+  }
+  const closeAnnouncementBtn = document.getElementById('closeAnnouncementBtn');
+  if (closeAnnouncementBtn) {
+    closeAnnouncementBtn.addEventListener('click', closeAnnouncementBanner);
+  }
+
   // Global ESC key listener for modals
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -409,6 +437,8 @@ function setupEventListeners() {
         closeConfirmModal(false);
       } else if (settingsModal && settingsModal.style.display === 'flex') {
         closeSettings();
+      } else if (updateModal && updateModal.style.display === 'flex') {
+        closeUpdateModal();
       }
     }
   });
@@ -1312,8 +1342,17 @@ async function loadSettings() {
     if (speedLimitSelect && settings.download_speed_limit !== undefined) {
       speedLimitSelect.value = String(settings.download_speed_limit);
     }
-    if (settings.language && window.i18n) {
-      window.i18n.applyLanguage(settings.language);
+    if (window.i18n) {
+      const storedLang = localStorage.getItem('studio_download_lang');
+      const activeLang = storedLang || settings.language || 'id';
+      window.i18n.applyLanguage(activeLang);
+      if (settings.language !== activeLang) {
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: activeLang })
+        }).catch(() => {});
+      }
     }
     loadCookieStatus();
   } catch (err) {
@@ -1557,7 +1596,7 @@ function openWhoAreYouModal(isEditing = false) {
           break;
         }
       }
-      if (!matched) inputRole.value = r || 'Video Editor (Adobe / DaVinci / dll)';
+      if (!matched) inputRole.value = r || 'Video Editor (Universal)';
     }
     if (inputContact) inputContact.value = window._currentUserProfile.contact || '';
   }
@@ -1585,7 +1624,7 @@ async function handleWhoAreYouSubmit() {
     return;
   }
 
-  const role = inputRole ? inputRole.value : 'Video Editor (Adobe / DaVinci / dll)';
+  const role = inputRole ? inputRole.value : 'Video Editor (Universal)';
   const contact = inputContact ? inputContact.value.trim() : '';
 
   try {
@@ -1735,4 +1774,110 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// --- Remote Sync & Version Management (Integrated with Admin Dashboard) ---
+async function checkForUpdates(isManual = false) {
+  try {
+    const res = await fetch('/api/app/check_update');
+    if (!res.ok) {
+      if (isManual) showToast('Gagal terhubung ke server pembaruan.', 'error');
+      return;
+    }
+    const data = await res.json();
+    
+    // 1. Sync broadcast announcement from admin dashboard
+    const banner = document.getElementById('announcementBanner');
+    const textEl = document.getElementById('announcementText');
+    if (banner && textEl) {
+      const dismissed = localStorage.getItem('dismissed_announcement');
+      const currentAnn = (data.announcement || '').trim();
+      if (currentAnn && currentAnn !== dismissed) {
+        textEl.textContent = currentAnn;
+        banner.style.display = 'block';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    // 2. If manual check or forced update, show modal
+    if (isManual || data.force_update) {
+      displayUpdateModal(data);
+    }
+  } catch (err) {
+    console.warn('Update check failed:', err);
+    if (isManual) showToast('Tidak dapat memeriksa pembaruan saat ini.', 'error');
+  }
+}
+
+function displayUpdateModal(data) {
+  const modal = document.getElementById('updateModal');
+  const loading = document.getElementById('updateLoadingState');
+  const result = document.getElementById('updateResultState');
+  if (!modal || !loading || !result) return;
+
+  modal.style.display = 'flex';
+  loading.style.display = 'none';
+  result.style.display = 'block';
+
+  const title = document.getElementById('updateStatusTitle');
+  const compare = document.getElementById('updateVersionCompare');
+  const notesContainer = document.getElementById('updateNotesContainer');
+  const notesContent = document.getElementById('updateNotesContent');
+  const icon = document.getElementById('updateStatusIcon');
+  const downloadBtn = document.getElementById('downloadUpdateBtn');
+
+  const t = (k, def) => window.i18n ? window.i18n.t(k, def) : def;
+
+  if (data.has_update) {
+    if (icon) {
+      icon.innerHTML = '⚡';
+      icon.style.background = 'rgba(251, 191, 36, 0.15)';
+      icon.style.border = '1px solid rgba(251, 191, 36, 0.3)';
+    }
+    if (title) title.textContent = data.force_update ? t('update_mandatory_title', 'Pembaruan Wajib Tersedia') : t('update_available_title', 'Pembaruan Tersedia!');
+    if (compare) compare.textContent = `v${data.current_version}  →  v${data.latest_version}`;
+    
+    if (notesContent) {
+      notesContent.textContent = data.update_message || t('update_default_notes', 'Peningkatan performa ekstraksi video & penyempurnaan UI.');
+    }
+    if (notesContainer) notesContainer.style.display = 'block';
+    
+    if (downloadBtn) {
+      downloadBtn.href = data.download_url || 'https://github.com/EmFaisal-code/Studio-Download/releases';
+      downloadBtn.style.display = 'inline-flex';
+    }
+  } else {
+    // Up to date
+    if (icon) {
+      icon.innerHTML = '✓';
+      icon.style.background = 'rgba(52, 211, 153, 0.15)';
+      icon.style.border = '1px solid rgba(52, 211, 153, 0.3)';
+    }
+    if (title) title.textContent = t('update_latest_title', 'Aplikasi Sudah Versi Terbaru');
+    if (compare) compare.textContent = `Studio Download v${data.current_version}`;
+    if (notesContainer) {
+      notesContainer.style.display = 'block';
+      if (notesContent) {
+        notesContent.textContent = data.update_message || t('update_latest_desc', 'Anda menggunakan versi paling mutakhir dari Studio Download.');
+      }
+    }
+    if (downloadBtn) downloadBtn.style.display = 'none';
+  }
+}
+
+function closeUpdateModal() {
+  const modal = document.getElementById('updateModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function closeAnnouncementBanner() {
+  const banner = document.getElementById('announcementBanner');
+  const textEl = document.getElementById('announcementText');
+  if (banner) {
+    banner.style.display = 'none';
+    if (textEl && textEl.textContent) {
+      localStorage.setItem('dismissed_announcement', textEl.textContent.trim());
+    }
+  }
 }

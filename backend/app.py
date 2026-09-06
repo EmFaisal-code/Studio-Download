@@ -425,6 +425,45 @@ async def api_admin_users():
         "app_version": "v1.0"
     }
 
+@app.get("/api/app/check_update")
+async def api_check_update():
+    from backend.telemetry import fetch_cloud_config
+    cfg = await asyncio.to_thread(fetch_cloud_config)
+    
+    current_version = "1.0"
+    latest_version = cfg.get("latest_version", {}).get("value") or "1.0"
+    min_version = cfg.get("min_version", {}).get("value") or "1.0"
+    download_url = cfg.get("download_url", {}).get("value") or "https://github.com/EmFaisal-code/Studio-Download/releases"
+    update_message = cfg.get("update_message", {}).get("value") or ""
+    announcement = cfg.get("announcement", {}).get("value") or ""
+    announcement_enabled = cfg.get("announcement", {}).get("enabled", True)
+    maintenance_mode = cfg.get("maintenance_mode", {}).get("enabled", False)
+    
+    def parse_ver(v_str):
+        clean = str(v_str).lower().replace("v", "").strip()
+        parts = []
+        for p in clean.split("."):
+            try:
+                parts.append(int(p))
+            except ValueError:
+                parts.append(0)
+        return parts or [0]
+
+    has_update = parse_ver(latest_version) > parse_ver(current_version)
+    force_update = parse_ver(min_version) > parse_ver(current_version)
+    
+    return {
+        "current_version": current_version,
+        "latest_version": latest_version,
+        "min_version": min_version,
+        "has_update": has_update,
+        "force_update": force_update,
+        "update_message": update_message,
+        "download_url": download_url,
+        "announcement": announcement if announcement_enabled else "",
+        "maintenance_mode": maintenance_mode
+    }
+
 @app.websocket("/ws/progress")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()

@@ -21,7 +21,7 @@
 ## 🌟 Fitur Unggulan
 
 - **Ekstraksi YouTube Resolusi Tinggi**: Unduh video hingga kualitas **8K (4320p)**, **4K 60fps**, **2K (1440p)**, dan **1080p Full HD**.
-- **Kompatibilitas NLE (Non-Linear Editing)**: Transcode otomatis ke format ramah editor video (**Adobe Premiere Pro**, **DaVinci Resolve**, **Final Cut**) tanpa bug black screen atau desinkronisasi audio.
+- **Kompatibilitas NLE (Non-Linear Editing)**: Transcode otomatis ke format ramah berbagai software video editor (NLE) serta media player tanpa bug black screen atau desinkronisasi audio.
 - **Ekstraksi Audio Studio-Grade**: Konversi dan simpan ke **MP3 320kbps**, **AAC (M4A)**, **FLAC**, **WAV**, **OPUS**.
 - **Dukungan Video Streaming & HLS (.m3u8)**: Tangkap dan unduh link video streaming web langsung dengan deteksi otomatis.
 - **Ekstensi Browser Pendamping (v1.0)**: Ekstensi Chrome untuk langsung mendeteksi media di tab browser aktif dan mengirimkannya ke aplikasi dengan satu klik.

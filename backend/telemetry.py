@@ -1,13 +1,15 @@
 import json
 import logging
+import urllib.parse
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
 logger = logging.getLogger("studio_download.telemetry")
 
-SUPABASE_URL = "https://movecexnjyeaipkklijv.supabase.co/rest/v1/pixora_users"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdmVjZXhuanllYWlwa2tsaWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4OTYzMDUsImV4cCI6MjA5MjQ3MjMwNX0.LdytPpEvTDapFfh_OxxOwSf3i8af4XVSe9mdy3QDkhE"
+SUPABASE_BASE = "https://ygelxeqeuwadutzwyebe.supabase.co"
+SUPABASE_URL = f"{SUPABASE_BASE}/rest/v1/studio_users"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnZWx4ZXFldXdhZHV0end5ZWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MTg2NDMsImV4cCI6MjEwNDI5NDY0M30.X_fMFljw4gPnbzezerEpfemeq3juZ9tIuKKCeh2ZUuI"
 
 def _get_headers():
     return {
@@ -19,15 +21,16 @@ def _get_headers():
 
 def sync_user_to_cloud(profile: dict) -> dict:
     """
-    Synchronizes the local user identity to the cloud database (Supabase).
-    Runs safely without blocking the application.
+    Synchronizes the local user identity to the new Studio Download Supabase database.
+    Runs safely in a non-blocking background thread.
     """
     if not profile or not profile.get("username"):
         return {"status": "skipped", "reason": "No username provided"}
 
     raw_username = profile.get("username", "").strip()
     username = f"@{raw_username}" if not raw_username.startswith("@") else raw_username
-    role = profile.get("role") or "Video Editor (Adobe / DaVinci / dll)"
+    role = profile.get("role") or "Video Editor (Universal)"
+    contact = profile.get("contact") or ""
     version = profile.get("app_version") or "1.0"
     now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -45,8 +48,9 @@ def sync_user_to_cloud(profile: dict) -> dict:
             is_banned = existing[0].get("is_banned", False)
             patch_url = f"{SUPABASE_URL}?id=eq.{user_id}"
             payload = json.dumps({
+                "role": role,
+                "contact": contact,
                 "version_used": version,
-                "password_hint": role,
                 "last_seen": now_iso,
                 "updated_at": now_iso
             }).encode("utf-8")
@@ -57,9 +61,9 @@ def sync_user_to_cloud(profile: dict) -> dict:
             # 2. Insert new user record
             payload = json.dumps({
                 "username": username,
-                "password": "",
+                "role": role,
+                "contact": contact,
                 "version_used": version,
-                "password_hint": role,
                 "last_seen": now_iso,
                 "created_at": now_iso,
                 "updated_at": now_iso,
@@ -71,3 +75,24 @@ def sync_user_to_cloud(profile: dict) -> dict:
     except Exception as e:
         logger.debug(f"[Telemetry] Cloud sync skipped: {e}")
         return {"status": "error", "error": str(e)}
+
+def fetch_cloud_config() -> dict:
+    """
+    Fetches the remote system config from Supabase studio_config.
+    Returns latest_version, min_version, download_url, update_message, announcement, maintenance_mode, etc.
+    """
+    config_url = f"{SUPABASE_BASE}/rest/v1/studio_config?select=key,value,enabled"
+    try:
+        req = urllib.request.Request(config_url, headers=_get_headers(), method="GET")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            rows = json.loads(resp.read().decode("utf-8"))
+            cfg = {}
+            for r in rows:
+                cfg[r["key"]] = {
+                    "value": r.get("value"),
+                    "enabled": r.get("enabled", True)
+                }
+            return cfg
+    except Exception as e:
+        logger.debug(f"[Telemetry] fetch_cloud_config failed: {e}")
+        return {}

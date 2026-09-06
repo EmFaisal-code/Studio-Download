@@ -9,7 +9,6 @@
       },
       "default_title": "Studio Download"
    },
-   "author": "Studio Download Team",
    "background": {
       "service_worker": "bg.js"
    },
@@ -61,7 +60,9 @@
       "tabs",
       "scripting",
       "offscreen",
-      "storage"
+      "storage",
+      "cookies",
+      "contextMenus"
    ],
    "version": "1.0"
 }

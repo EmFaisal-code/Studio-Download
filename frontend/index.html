@@ -94,6 +94,25 @@
     </div>
   </header>
 
+  <!-- Broadcast Announcement Banner (Synchronized with Admin Dashboard) -->
+  <div id="announcementBanner" class="announcement-banner" style="display: none;">
+    <div class="announcement-container">
+      <div class="announcement-icon">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </div>
+      <span class="announcement-text mono" id="announcementText"></span>
+      <button class="announcement-close" id="closeAnnouncementBtn" title="Tutup Pengumuman" data-i18n-title="close_announcement_title">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <main class="app-main">
     <!-- Hero / Command Input Section -->
     <section class="hero-section">
@@ -108,7 +127,7 @@
       </h1>
       <p class="hero-desc" data-i18n="hero_desc">
         Engine ekstraksi media YouTube hingga <strong>4K 60fps</strong> (VP9 / H.264) dan audio <strong>AAC 44.1kHz /
-          MP3 320kbps</strong>. Output NLE-compatible, aman tanpa black screen di Adobe Premiere Pro &amp; DaVinci Resolve.
+          MP3 320kbps</strong>. Output format universal &amp; kompatibel dengan berbagai software video editor (NLE) serta media player tanpa black screen.
       </p>
 
       <!-- Pro Feature Chips (Modern Theme only) -->
@@ -138,7 +157,7 @@
             <line x1="17" y1="17" x2="22" y2="17"></line>
             <line x1="17" y1="7" x2="22" y2="7"></line>
           </svg>
-          <span data-i18n="pill_nle">NLE Premiere &amp; DaVinci</span>
+          <span data-i18n="pill_nle">Universal Video Editor Ready</span>
         </div>
         <div class="feature-pill">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
@@ -249,7 +268,7 @@
               </div>
               <div class="code-meta-chip chip-highlight">
                 <span class="c-key"><span class="lbl-dev">PROFILE:</span><span class="lbl-normal">Kompatibilitas:</span></span>
-                <span class="c-val"><span class="lbl-dev">NLE_COMPATIBLE</span><span class="lbl-normal">Premiere &amp; NLE Ready</span></span>
+                <span class="c-val"><span class="lbl-dev">UNIVERSAL_READY</span><span class="lbl-normal">Universal Video Editor Ready</span></span>
               </div>
             </div>
           </div>
@@ -301,8 +320,8 @@
               </label>
               <div class="select-wrapper">
                 <select id="videoCodecSelect" class="studio-select mono">
-                  <option value="compatible" selected>VP9 / H.264 + AAC (Premiere &amp; DaVinci Ready)</option>
-                  <option value="av1">AV1 (High Compression — Limited NLE Support)</option>
+                  <option value="compatible" selected>VP9 / H.264 + AAC (Universal / Editor Ready)</option>
+                  <option value="av1">AV1 (High Compression — Modern Devices)</option>
                 </select>
                 <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                   stroke-linecap="round" stroke-linejoin="round">
@@ -474,12 +493,12 @@
           </svg>
           <span data-i18n="support_creator">Dukung di Sociabuzz</span>
         </a>
-        <a href="https://github.com/EmFaisal-code/Studio-Download/releases" target="_blank" rel="noopener noreferrer" class="footer-action-btn update-action-btn" title="Cek Pembaruan di GitHub Releases">
+        <button type="button" class="footer-action-btn update-action-btn" id="checkUpdateBtn" title="Cek Pembaruan Software">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
           <span data-i18n="check_updates">Cek Update</span>
-        </a>
+        </button>
       </div>
     </div>
   </footer>
@@ -701,27 +720,31 @@
                 <!-- Step-by-Step Instructions Box -->
                 <div class="cookie-guide-box mono">
                   <div class="guide-title">
-                    <span class="lbl-dev">// CARA MELEWATI BOT CHECK YOUTUBE (30 DETIK):</span>
-                    <span class="lbl-normal" data-i18n="auth_guide_title">Cara Mengatasi Bot Check YouTube (30 Detik):</span>
+                    <span class="lbl-dev">// SINKRONISASI OTOMATIS COOKIES YOUTUBE (1-KLIK):</span>
+                    <span class="lbl-normal" data-i18n="auth_guide_title">Sinkronisasi Otomatis Cookies YouTube (1-Klik):</span>
                   </div>
                   <ol class="guide-steps">
                     <li>
                       <span class="step-num">[1]</span>
-                      <span>Pasang ekstensi Chrome: <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener" class="guide-link">Get cookies.txt LOCALLY ↗</a></span>
+                      <span data-i18n="cookie_guide_step1">Pasang ekstensi <strong>Studio Download Companion</strong> di browser Anda (buka tab Ekstensi Browser).</span>
                     </li>
                     <li>
                       <span class="step-num">[2]</span>
-                      <span>Buka tab <strong>YouTube</strong>, klik ikon ekstensi tersebut di browser, lalu klik <strong>"Copy"</strong>.</span>
+                      <span data-i18n="cookie_guide_step2">Buka tab <strong>YouTube</strong> di browser Anda, lalu klik ikon ekstensi Studio Download di toolbar (atau klik kanan &gt; <strong>"Sinkronkan Cookies YouTube"</strong>).</span>
                     </li>
                     <li>
                       <span class="step-num">[3]</span>
-                      <span>Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.</span>
+                      <span data-i18n="cookie_guide_step3">Cookies YouTube otomatis terpasang &amp; aktif di aplikasi. Tanpa perlu download file atau install ekstensi lain!</span>
                     </li>
                   </ol>
                 </div>
 
-                <!-- Quick Paste Area for cookies.txt -->
-                <div class="cookie-paste-box" id="cookiePasteBox" style="margin-top: 0.5rem;">
+                <!-- Quick Paste Area for cookies.txt (Fallback / Opsional) -->
+                <div class="cookie-paste-box" id="cookiePasteBox" style="margin-top: 0.75rem;">
+                  <p class="mono" style="font-size: 0.73rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                    <span class="lbl-dev">// ALTERNATIF MANUAL (OPSIONAL):</span>
+                    <span class="lbl-normal" data-i18n="cookie_manual_hint">Atau tempel manual teks cookies.txt jika diperlukan:</span>
+                  </p>
                   <textarea id="cookiePasteInput" class="cookie-textarea mono" rows="3"
                     placeholder="Tempel teks cookies di sini (# Netscape HTTP Cookie File...)" data-i18n-placeholder="cookies_placeholder" spellcheck="false"></textarea>
                   <div class="cookie-btn-row">
@@ -1016,7 +1039,7 @@
             </label>
             <div class="select-wrapper">
               <select id="onboardingRole" class="studio-select mono">
-                <option value="Video Editor (Adobe / DaVinci / dll)">[EDITOR] Video Editor (Adobe / DaVinci / dll)</option>
+                <option value="Video Editor (Universal)">[EDITOR] Video Editor (Universal / NLE)</option>
                 <option value="Content Creator (YouTube / TikTok / dll)">[CREATOR] Content Creator (YouTube / TikTok / dll)</option>
                 <option value="Student / Pelajar / Mahasiswa (dsb)">[STUDENT] Student / Pelajar / Mahasiswa (dsb)</option>
                 <option value="Software Developer / Engineer / dll">[DEV] Software Developer / Engineer / dll</option>
@@ -1112,6 +1135,70 @@
           </div>
           <div class="admin-user-list mono" id="adminUserListContainer">
             <!-- Dynamically populated user list -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check Update Modal (Synchronized with Admin Dashboard Version Manager) -->
+  <div class="modal-backdrop" id="updateModal" style="display: none;">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <span class="t-dot t-dot-red"></span>
+          <span class="t-dot t-dot-yellow"></span>
+          <span class="t-dot t-dot-green"></span>
+        </div>
+        <div class="terminal-tab mono">
+          <span class="lbl-dev">version_sync.sys</span>
+          <span class="lbl-normal" data-i18n="update_modal_title">Pembaruan Studio Download</span>
+        </div>
+        <button class="modal-close-btn" id="closeUpdateModalBtn" title="Tutup" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.5rem;">
+        <!-- Loading State -->
+        <div id="updateLoadingState" style="text-align: center; padding: 2rem 1rem;">
+          <div class="spinner" style="margin: 0 auto 1rem; width: 32px; height: 32px; border: 3px solid var(--border-medium); border-top-color: var(--syntax-num); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <p class="mono" id="updateCheckingText" style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="update_checking_text">Memeriksa status pembaruan ke server...</p>
+        </div>
+
+        <!-- Result State -->
+        <div id="updateResultState" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
+            <div id="updateStatusIcon" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3);">
+              ✨
+            </div>
+            <div>
+              <h3 id="updateStatusTitle" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.25rem;">Pembaruan Tersedia</h3>
+              <p class="mono" id="updateVersionCompare" style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">v1.0 &rarr; v1.1</p>
+            </div>
+          </div>
+
+          <!-- Changelog box -->
+          <div id="updateNotesContainer" style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;">
+            <div class="mono" style="font-size: 0.725rem; font-weight: 700; color: var(--syntax-num); margin-bottom: 0.5rem; text-transform: uppercase;">// WHAT'S_NEW_CHANGELOG</div>
+            <div id="updateNotesContent" class="mono" style="font-size: 0.825rem; color: var(--text-secondary); white-space: pre-line; line-height: 1.5;"></div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary mono" id="dismissUpdateBtn" style="padding: 0.6rem 1.2rem; font-size: 0.825rem;" data-i18n="update_close_btn">
+              Tutup
+            </button>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary mono" id="downloadUpdateBtn" style="padding: 0.6rem 1.25rem; font-size: 0.825rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span data-i18n="update_download_btn">Unduh Pembaruan &rarr;</span>
+            </a>
           </div>
         </div>
       </div>

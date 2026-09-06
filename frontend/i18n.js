@@ -22,10 +22,10 @@ const i18nData = {
     hero_eyebrow: 'YouTube 4K 60fps Media Extractor',
     hero_title: 'Studio',
     hero_title_accent: 'Download',
-    hero_desc: 'Engine ekstraksi media YouTube hingga <strong>4K 60fps</strong> (VP9 / H.264) dan audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Output NLE-compatible, aman tanpa black screen di Adobe Premiere Pro & DaVinci Resolve.',
+    hero_desc: 'Engine ekstraksi media YouTube hingga <strong>4K 60fps</strong> (VP9 / H.264) dan audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Output format universal & kompatibel dengan berbagai software video editor (NLE) serta media player tanpa black screen.',
     pill_4k: '4K 60fps & HDR',
     pill_lossless: 'Audio Lossless 320kbps',
-    pill_nle: 'NLE Premiere & DaVinci',
+    pill_nle: 'Universal Video Editor Ready',
     pill_bot: 'Bypass Bot Shield',
 
     // Input Bar
@@ -100,10 +100,11 @@ const i18nData = {
     save_settings_btn: 'Simpan Pengaturan',
     cancel_settings_btn: 'Batal',
     auth_cookies_label: 'Autentikasi YouTube (Anti Bot):',
-    auth_guide_title: 'Cara Mengatasi Bot Check YouTube (30 Detik):',
-    cookie_guide_step1: 'Pasang ekstensi Chrome:',
-    cookie_guide_step2: 'Buka tab <strong>YouTube</strong>, klik ikon ekstensi tersebut di browser, lalu klik <strong>"Copy"</strong>.',
-    cookie_guide_step3: 'Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.',
+    auth_guide_title: 'Sinkronisasi Otomatis Cookies YouTube (1-Klik):',
+    cookie_guide_step1: 'Pasang ekstensi <strong>Studio Download Companion</strong> di browser Anda (buka tab Ekstensi Browser).',
+    cookie_guide_step2: 'Buka tab <strong>YouTube</strong> di browser Anda, lalu klik ikon ekstensi Studio Download di toolbar (atau klik kanan &gt; <strong>"Sinkronkan Cookies YouTube"</strong>).',
+    cookie_guide_step3: 'Cookies YouTube otomatis terpasang &amp; aktif di aplikasi. Tanpa perlu download file atau install ekstensi lain!',
+    cookie_manual_hint: 'Atau tempel manual teks cookies.txt jika diperlukan:',
     cookies_placeholder: 'Tempel teks cookies di sini (# Netscape HTTP Cookie File...)',
     save_cookies_btn: 'Simpan File Cookies',
     delete_cookies_confirm: 'Yakin ingin menghapus file cookies.txt?',
@@ -151,7 +152,19 @@ const i18nData = {
     toast_cookies_deleted: 'File cookies telah dihapus.',
     toast_history_cleared: 'Riwayat unduhan berhasil dibersihkan.',
     toast_clipboard_empty: 'Clipboard tidak berisi teks atau URL valid.',
-    toast_folder_opened: 'Membuka folder unduhan...'
+    toast_folder_opened: 'Membuka folder unduhan...',
+
+    // Announcement & Updates
+    close_announcement_title: 'Tutup Pengumuman',
+    update_modal_title: 'Pembaruan Studio Download',
+    update_checking_text: 'Memeriksa status pembaruan ke server...',
+    update_close_btn: 'Tutup',
+    update_download_btn: 'Unduh Pembaruan →',
+    update_available_title: 'Pembaruan Tersedia!',
+    update_mandatory_title: 'Pembaruan Wajib Tersedia',
+    update_latest_title: 'Aplikasi Sudah Versi Terbaru',
+    update_latest_desc: 'Anda menggunakan versi paling mutakhir dari Studio Download.',
+    update_default_notes: 'Peningkatan performa ekstraksi video & penyempurnaan UI.'
   },
 
   en: {
@@ -175,10 +188,10 @@ const i18nData = {
     hero_eyebrow: 'YouTube 4K 60fps Media Extractor',
     hero_title: 'Studio',
     hero_title_accent: 'Download',
-    hero_desc: 'High-fidelity YouTube extraction engine supporting up to <strong>4K 60fps</strong> (VP9 / H.264) and audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. NLE-compatible output, safe from black screens in Adobe Premiere Pro & DaVinci Resolve.',
+    hero_desc: 'High-fidelity YouTube extraction engine supporting up to <strong>4K 60fps</strong> (VP9 / H.264) and audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Universal output compatible with all major video editors (NLE) and media players without black screen.',
     pill_4k: '4K 60fps & HDR',
     pill_lossless: 'Audio Lossless 320kbps',
-    pill_nle: 'NLE Premiere & DaVinci',
+    pill_nle: 'Universal Video Editor Ready',
     pill_bot: 'Bypass Bot Shield',
 
     // Input Bar
@@ -253,10 +266,11 @@ const i18nData = {
     save_settings_btn: 'Save Settings',
     cancel_settings_btn: 'Cancel',
     auth_cookies_label: 'YouTube Authentication (Anti-Bot):',
-    auth_guide_title: 'How to Bypass YouTube Bot Check (30 Seconds):',
-    cookie_guide_step1: 'Install Chrome extension:',
-    cookie_guide_step2: 'Open <strong>YouTube</strong> tab, click the extension icon in browser, then click <strong>"Copy"</strong>.',
-    cookie_guide_step3: 'Paste (Ctrl+V) cookies text into the box below, then click <strong>Save Cookies File</strong>.',
+    auth_guide_title: 'Automatic YouTube Cookie Sync (1-Click):',
+    cookie_guide_step1: 'Install the <strong>Studio Download Companion</strong> extension in your browser (check Browser Extension tab).',
+    cookie_guide_step2: 'Open any <strong>YouTube</strong> tab, then click the Studio Download icon in toolbar (or right-click &gt; <strong>"Sync YouTube Cookies"</strong>).',
+    cookie_guide_step3: 'YouTube cookies will be automatically installed &amp; active in the app. No need to download files or install other extensions!',
+    cookie_manual_hint: 'Or manually paste cookies.txt text if needed:',
     cookies_placeholder: 'Paste cookies text here (# Netscape HTTP Cookie File...)',
     save_cookies_btn: 'Save Cookies File',
     delete_cookies_confirm: 'Are you sure you want to delete the cookies.txt file?',
@@ -304,7 +318,19 @@ const i18nData = {
     toast_cookies_deleted: 'Cookies file deleted.',
     toast_history_cleared: 'Download history cleared successfully.',
     toast_clipboard_empty: 'Clipboard does not contain valid text or URL.',
-    toast_folder_opened: 'Opening download folder...'
+    toast_folder_opened: 'Opening download folder...',
+
+    // Announcement & Updates
+    close_announcement_title: 'Close Announcement',
+    update_modal_title: 'Studio Download Updates',
+    update_checking_text: 'Checking for updates on server...',
+    update_close_btn: 'Close',
+    update_download_btn: 'Download Update →',
+    update_available_title: 'Update Available!',
+    update_mandatory_title: 'Mandatory Update Available',
+    update_latest_title: 'Software is Up to Date',
+    update_latest_desc: 'You are running the latest version of Studio Download.',
+    update_default_notes: 'Performance improvements and UI polish.'
   }
 };
 
@@ -344,6 +370,7 @@ class I18nManager {
 
   applyLanguage(lang) {
     this.currentLang = lang;
+    localStorage.setItem('studio_download_lang', lang);
     const dict = i18nData[lang] || i18nData['id'];
 
     // 1. Text content / innerHTML via data-i18n

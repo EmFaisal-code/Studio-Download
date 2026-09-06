@@ -18,6 +18,7 @@ server_error.log
 # Temporary test & scratch folders
 .test_temp/
 scratch/
+0.7.2_0/
 .tempmediaStorage/
 .system_generated/
 
