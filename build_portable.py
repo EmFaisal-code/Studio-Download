@@ -54,7 +54,8 @@ def build():
         "backend.config",
         "backend.downloader",
         "backend.history",
-        "backend.parser"
+        "backend.parser",
+        "backend.telemetry"
     ]
 
     cmd = [

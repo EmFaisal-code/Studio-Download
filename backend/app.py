@@ -21,6 +21,7 @@ from backend.config import get_settings, save_settings, get_app_dir, get_bundle_
 from backend.parser import parse_url
 from backend.history import get_history, delete_history_entry, clear_all_history
 from backend.downloader import download_manager, subscribe_progress, unsubscribe_progress, active_tasks
+from backend.telemetry import sync_user_to_cloud
 
 app = FastAPI(title="Studio Download API")
 
@@ -57,6 +58,11 @@ async def startup_event():
                 pass
 
     subscribe_progress(progress_listener)
+
+    # Sync current user to cloud database in background
+    profile = get_settings().get("user_profile")
+    if profile:
+        asyncio.create_task(asyncio.to_thread(sync_user_to_cloud, profile))
 
 class ParseRequest(BaseModel):
     url: str
@@ -397,6 +403,8 @@ async def api_register_user(req: UserRegisterRequest):
     save_settings({"user_profile": profile})
     # Save into users.json registry
     save_user_to_registry(profile)
+    # Sync to cloud database
+    asyncio.create_task(asyncio.to_thread(sync_user_to_cloud, profile))
     
     return {
         "status": "ok",
