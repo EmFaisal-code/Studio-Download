@@ -246,7 +246,7 @@ body[data-theme="cyber-yellow"] {
   color: #52525b;
   font-size: 1.05rem;
   line-height: 1.65;
-  max-width: min(960px, 92%);
+  max-width: 720px;
 }
 
 [data-theme="modern-yellow"] .code-eyebrow,
@@ -1212,26 +1212,8 @@ body[data-theme="cyber-yellow"] {
   --radius-lg: 16px;
   --radius-full: 9999px;
 
-  /* Layout */
-  --container-max: 1240px;
-}
-
-@media (min-width: 1400px) {
-  :root {
-    --container-max: 1380px;
-  }
-}
-
-@media (min-width: 1600px) {
-  :root {
-    --container-max: 1520px;
-  }
-}
-
-@media (min-width: 1920px) {
-  :root {
-    --container-max: 1640px;
-  }
+  /* Layout - Focused IDE width centered in viewport */
+  --container-max: 1040px;
 }
 
 /* Base Reset */
@@ -1682,7 +1664,7 @@ button {
 .hero-desc {
   color: var(--text-secondary);
   font-size: 1rem;
-  max-width: min(960px, 92%);
+  max-width: 720px;
   line-height: 1.65;
   margin-bottom: 1.75rem;
 }

@@ -109,13 +109,17 @@ def build():
     # 5. Copy Companion Extension to portable directory
     ext_src = BASE_DIR / "extra"
     if not ext_src.exists():
-        ext_src = BASE_DIR / "2.2.9_0"
+        ext_src = BASE_DIR / "Extension"
     ext_dest = dist_dir / "Extension"
+    ext_dest_extra = dist_dir / "extra"
     if ext_src.exists():
-        print("[*] Menyalin Studio Download Extension (extra) ke direktori portable...")
+        print("[*] Menyalin Studio Download Extension ke direktori portable...")
         if ext_dest.exists():
             shutil.rmtree(ext_dest)
         shutil.copytree(ext_src, ext_dest)
+        if ext_dest_extra.exists():
+            shutil.rmtree(ext_dest_extra)
+        shutil.copytree(ext_src, ext_dest_extra)
 
     # 6. Create Portable README
     readme_path = dist_dir / "README.txt"

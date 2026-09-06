@@ -7,7 +7,7 @@ let activeMode = 'video'; // 'video' or 'audio'
 let ws = null;
 let activeTasksMap = {};
 
-const DEFAULT_VIDEO_FALLBACK_THUMB = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90"><rect width="160" height="90" fill="%2318181b"/><rect x="4" y="4" width="152" height="82" rx="6" fill="%2327272a" stroke="%233f3f46" stroke-width="1.5"/><circle cx="80" cy="45" r="18" fill="%2309090b" stroke="%2352525b" stroke-width="1.5"/><polygon points="76,37 88,45 76,53" fill="%23facc15"/></svg>`;
+const DEFAULT_VIDEO_FALLBACK_THUMB = '/static/thumb-placeholder.svg';
 
 // DOM Elements
 const videoUrlInput = document.getElementById('videoUrlInput');
@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   setupEventListeners();
   checkUserProfile();
+  loadExtensionInfo();
 
   // Check URL query parameters for stream auto-fill from extension
   try {
@@ -1058,7 +1059,7 @@ function renderHistory() {
     const bitrateDisplay = item.bitrate ? ` • ${item.bitrate}` : '';
 
     el.innerHTML = `
-      <img class="history-thumb" src="${thumb}" alt="" onerror="this.onerror=null;this.src='${DEFAULT_VIDEO_FALLBACK_THUMB}';">
+      <img class="history-thumb" src="${thumb}" alt="" onerror="this.onerror=null;this.src='/static/thumb-placeholder.svg';">
       <div class="history-details mono">
         <div class="history-title" title="${item.title}">${item.title}</div>
         <div class="history-meta">
@@ -1693,7 +1694,11 @@ async function handleOpenExtensionFolder() {
 
 function handleCopyExtensionPath() {
   const input = document.getElementById('extensionDirPathInput');
-  const path = input ? input.value : 'D:\\Project\\YT\\extra';
+  const path = input && input.value ? input.value.trim() : '';
+  if (!path) {
+    showToast('Path folder ekstensi belum terdeteksi.', 'error');
+    return;
+  }
   if (navigator.clipboard) {
     navigator.clipboard.writeText(path).then(() => {
       showToast('📋 Path folder ekstensi disalin ke clipboard!', 'success');

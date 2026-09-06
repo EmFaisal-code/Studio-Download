@@ -315,19 +315,26 @@ async def api_open_file(req: PathActionRequest):
 
 def resolve_extension_dir() -> Path:
     """Finds the browser extension directory across dev and portable builds."""
-    # 1. Check extra/ in BASE_DIR
-    p1 = BASE_DIR / "extra"
-    if p1.exists() and (p1 / "manifest.json").exists():
-        return p1
-    # 2. Check Extension/ in BASE_DIR (portable build)
-    p2 = BASE_DIR / "Extension"
-    if p2.exists() and (p2 / "manifest.json").exists():
-        return p2
-    # 3. Check BUNDLE_DIR / extra
-    p3 = BUNDLE_DIR / "extra"
-    if p3.exists() and (p3 / "manifest.json").exists():
-        return p3
-    return BASE_DIR / "extra"
+    candidates = [
+        BASE_DIR / "Extension",
+        BASE_DIR / "extra",
+        BUNDLE_DIR / "Extension",
+        BUNDLE_DIR / "extra",
+    ]
+    if getattr(sys, 'frozen', False):
+        exe_dir = Path(sys.executable).resolve().parent
+        candidates.insert(0, exe_dir / "Extension")
+        candidates.insert(1, exe_dir / "extra")
+
+    for p in candidates:
+        if p.exists() and (p / "manifest.json").exists():
+            return p
+
+    for p in candidates:
+        if p.exists():
+            return p
+
+    return candidates[0]
 
 @app.get("/api/extension/info")
 async def api_extension_info():
