@@ -484,9 +484,9 @@
     </div>
   </footer>
 
-  <!-- Settings Modal (Config Dialog) -->
+  <!-- Settings Modal (Config Dialog with Left Sidebar Navigation) -->
   <div class="modal-backdrop" id="settingsModal" style="display: none;">
-    <div class="modal-dialog">
+    <div class="modal-dialog settings-dialog-sidebar">
       <div class="terminal-bar">
         <div class="terminal-dots">
           <span class="t-dot t-dot-red"></span>
@@ -506,357 +506,383 @@
         </button>
       </div>
 
-      <!-- Settings Tab Navigation -->
-      <div class="settings-nav-tabs mono">
-        <button type="button" class="settings-nav-tab active" data-tab="downloads" id="tabBtnDownloads">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          <span class="lbl-dev">[01] ENGINE_&amp;_LIMITS</span>
-          <span class="lbl-normal">Unduhan &amp; Limit</span>
-        </button>
-        <button type="button" class="settings-nav-tab" data-tab="auth" id="tabBtnAuth">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          <span class="lbl-dev">[02] AUTH_COOKIES</span>
-          <span class="lbl-normal" data-i18n="tab_auth">Autentikasi YouTube</span>
-        </button>
-        <button type="button" class="settings-nav-tab" data-tab="appearance" id="tabBtnAppearance">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5"></circle>
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-          </svg>
-          <span class="lbl-dev">[03] THEME_UI</span>
-          <span class="lbl-normal">Tema Tampilan</span>
-        </button>
-        <button type="button" class="settings-nav-tab" data-tab="extension" id="tabBtnExtension">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-          </svg>
-          <span class="lbl-dev">[04] EXTENSION</span>
-          <span class="lbl-normal" data-i18n="tab_extension">Ekstensi Browser</span>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <!-- TAB 1: ENGINE & DOWNLOAD LIMITS -->
-        <div class="settings-tab-content" id="tabContentDownloads">
-          <div class="setting-group">
-            <label class="mono" for="downloadDirInput">
-              <span class="lbl-dev">STORAGE_DIRECTORY_PATH:</span>
-              <span class="lbl-normal">Folder Penyimpanan:</span>
-            </label>
-            <div class="path-box">
-              <input type="text" id="downloadDirInput" class="input-field mono"
-                placeholder="C:\Users\...\Downloads\StudioDownload">
-              <button class="btn btn-secondary mono" id="openSettingsDirBtn">
-                <span class="lbl-dev">OPEN</span>
-                <span class="lbl-normal">Buka Folder</span>
-              </button>
-            </div>
-            <p class="setting-hint mono">
-              <span class="lbl-dev">// File output disimpan otomatis di direktori lokal ini.</span>
-              <span class="lbl-normal">File hasil unduhan disimpan otomatis di folder ini.</span>
-            </p>
+      <!-- Main Layout: Left Sidebar + Right Content Area -->
+      <div class="settings-layout-wrapper">
+        <!-- Vertical Left Sidebar -->
+        <aside class="settings-sidebar mono">
+          <div class="settings-sidebar-header">
+            <span class="lbl-dev">// PREFERENCES</span>
+            <span class="lbl-normal">KATEGORI</span>
           </div>
-
-          <!-- 2-Column Grid for Container & Concurrency -->
-          <div class="settings-grid-2col">
-            <div class="setting-group">
-              <label class="mono" for="defaultFormatSelect">
-                <span class="lbl-dev">DEFAULT_CONTAINER:</span>
-                <span class="lbl-normal">Format Kontainer Standar:</span>
-              </label>
-              <div class="select-wrapper">
-                <select id="defaultFormatSelect" class="studio-select mono">
-                  <option value="mkv">MKV (Matroska Studio — Rekomendasi)</option>
-                  <option value="mp4">MP4 (MPEG-4 Universal Video)</option>
-                  <option value="mp3">MP3 (Audio Ekstraksi 320kbps)</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-            </div>
-
-            <div class="setting-group">
-              <label class="mono" for="maxConcurrentSelect">
-                <span class="lbl-dev">CONCURRENT_DOWNLOAD_LIMIT:</span>
-                <span class="lbl-normal">Batasan Unduhan Bersamaan:</span>
-              </label>
-              <div class="select-wrapper">
-                <select id="maxConcurrentSelect" class="studio-select mono">
-                  <option value="1">1 Unduhan (Satu per satu / Antrean)</option>
-                  <option value="2" selected>2 Unduhan Sekaligus (Standar)</option>
-                  <option value="3">3 Unduhan Sekaligus</option>
-                  <option value="5">5 Unduhan Sekaligus</option>
-                  <option value="0">Tanpa Batas (Semua Sekaligus)</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bandwidth Speed Limiter -->
-          <div class="setting-group">
-            <label class="mono" for="speedLimitSelect">
-              <span class="lbl-dev">BANDWIDTH_SPEED_LIMIT:</span>
-              <span class="lbl-normal">Limit Kecepatan Unduh (Speed Limit):</span>
-            </label>
-            <div class="select-wrapper">
-              <select id="speedLimitSelect" class="studio-select mono">
-                <option value="0" selected>Tanpa Batas (Kecepatan Penuh / Unlimited)</option>
-                <option value="1024">1 MB/s (1,024 KB/s)</option>
-                <option value="2048">2 MB/s (2,048 KB/s)</option>
-                <option value="5120">5 MB/s (5,120 KB/s)</option>
-                <option value="10240">10 MB/s (10,240 KB/s)</option>
-                <option value="25600">25 MB/s (25,600 KB/s)</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
+          <nav class="settings-sidebar-nav">
+            <button type="button" class="settings-nav-tab active" data-tab="downloads" id="tabBtnDownloads">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-            </div>
-            <p class="setting-hint mono">
-              <span class="lbl-dev">// Batasi kecepatan unduh yt-dlp agar koneksi internet tetap lancar.</span>
-              <span class="lbl-normal">Membatasi konsumsi bandwidth agar koneksi internet tetap lancar untuk aktivitas lain.</span>
-            </p>
-          </div>
-        </div>
-
-        <!-- TAB 2: YOUTUBE AUTH & COOKIES -->
-        <div class="settings-tab-content" id="tabContentAuth" style="display: none;">
-          <div class="setting-group" id="cookieSettingGroup">
-            <div class="setting-header-row">
-              <label class="mono" for="cookieSourceSelect">
-                <span class="lbl-dev">YOUTUBE_AUTH_COOKIES:</span>
-                <span class="lbl-normal" data-i18n="auth_cookies_label">Autentikasi YouTube (Anti Bot):</span>
-              </label>
-              <span class="cookie-status-tag mono" id="cookieStatusTag">[STATUS: NONE]</span>
-            </div>
-
-            <div class="select-wrapper">
-              <select id="cookieSourceSelect" class="studio-select mono">
-                <option value="auto">AUTO // File cookies.txt (Rekomendasi Utama — Bebas Bot)</option>
-                <option value="browser">BROWSER // Ambil dari Browser (Membutuhkan Browser Ditutup)</option>
-                <option value="none">DISABLED // Tanpa Autentikasi</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
-
-            <!-- Browser Selection row (visible when browser is selected) -->
-            <div id="browserSelectRow" style="display: none; margin-top: 0.5rem;">
-              <div class="select-wrapper">
-                <select id="cookieBrowserSelect" class="studio-select mono">
-                  <option value="chrome">Google Chrome</option>
-                  <option value="edge">Microsoft Edge</option>
-                  <option value="firefox">Mozilla Firefox</option>
-                  <option value="brave">Brave Browser</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
+              <div class="nav-tab-info">
+                <span class="lbl-dev">[01] ENGINE &amp; LIMITS</span>
+                <span class="lbl-normal">Unduhan &amp; Limit</span>
               </div>
-              <p class="setting-hint mono" style="color: var(--accent-danger); margin-top: 0.35rem;">
-                <span class="lbl-dev">// INFO: Chrome terbaru memproteksi DB akun (DPAPI). Gunakan opsi AUTO // File cookies.txt di bawah.</span>
-                <span class="lbl-normal">Catatan: Chrome terbaru memproteksi database akun (DPAPI). Disarankan memakai opsi file cookies.txt di bawah.</span>
-              </p>
-            </div>
+            </button>
 
-            <!-- Step-by-Step Instructions Box -->
-            <div class="cookie-guide-box mono">
-              <div class="guide-title">
-                <span class="lbl-dev">// CARA MELEWATI BOT CHECK YOUTUBE (30 DETIK):</span>
-                <span class="lbl-normal" data-i18n="auth_guide_title">Cara Mengatasi Bot Check YouTube (30 Detik):</span>
-              </div>
-              <ol class="guide-steps">
-                <li>
-                  <span class="step-num">[1]</span>
-                  <span>Pasang ekstensi Chrome: <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener" class="guide-link">Get cookies.txt LOCALLY ↗</a></span>
-                </li>
-                <li>
-                  <span class="step-num">[2]</span>
-                  <span>Buka tab <strong>YouTube</strong>, klik ikon ekstensi tersebut di browser, lalu klik <strong>"Copy"</strong>.</span>
-                </li>
-                <li>
-                  <span class="step-num">[3]</span>
-                  <span>Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.</span>
-                </li>
-              </ol>
-            </div>
-
-            <!-- Quick Paste Area for cookies.txt -->
-            <div class="cookie-paste-box" id="cookiePasteBox" style="margin-top: 0.5rem;">
-              <textarea id="cookiePasteInput" class="cookie-textarea mono" rows="3"
-                placeholder="Tempel teks cookies di sini (# Netscape HTTP Cookie File...)" data-i18n-placeholder="cookies_placeholder" spellcheck="false"></textarea>
-              <div class="cookie-btn-row">
-                <button class="btn btn-secondary mono btn-small" id="saveCookiePasteBtn">
-                  <span class="lbl-dev">SAVE_COOKIES_TXT()</span>
-                  <span class="lbl-normal" data-i18n="save_cookies_btn">Simpan File Cookies</span>
-                </button>
-                <button class="btn-ghost mono btn-small" id="deleteCookieBtn" style="color:var(--accent-danger)">
-                  <span class="lbl-dev">[DELETE_COOKIES]</span>
-                  <span class="lbl-normal" data-i18n="delete_cookies_btn">Hapus Cookies</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 3: THEME & UI -->
-        <div class="settings-tab-content" id="tabContentAppearance" style="display: none;">
-          <div class="setting-group">
-            <label class="mono" for="themeSelect">
-              <span class="lbl-dev">UI_THEME_PROFILE:</span>
-              <span class="lbl-normal" data-i18n="theme_label">Tema Tampilan Aplikasi:</span>
-            </label>
-            <div class="select-wrapper">
-              <select id="themeSelect" class="studio-select mono">
-                <option value="modern-yellow">Studio Modern // Kuning Modern &amp; Profesional (Rekomendasi)</option>
-                <option value="developer-zinc">Developer Dark Zinc // Terminal IDE Code Style</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
+            <button type="button" class="settings-nav-tab" data-tab="auth" id="tabBtnAuth">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-            </div>
-          <div class="setting-group" style="margin-top: 1rem;">
-            <label class="mono" for="languageSelect">
-              <span class="lbl-dev">UI_LANGUAGE_LOCALE:</span>
-              <span class="lbl-normal" data-i18n="language_label">Bahasa Antarmuka (Language):</span>
-            </label>
-            <div class="select-wrapper">
-              <select id="languageSelect" class="studio-select mono">
-                <option value="id">🇮🇩 Bahasa Indonesia (Indonesian)</option>
-                <option value="en">🇺🇸 English (US)</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
-            <p class="setting-hint mono">
-              <span class="lbl-dev">// Language switches dynamically across all views &amp; notifications.</span>
-              <span class="lbl-normal">Teks aplikasi otomatis diperbarui secara instan.</span>
-            </p>
-          </div>
+              <div class="nav-tab-info">
+                <span class="lbl-dev">[02] AUTH COOKIES</span>
+                <span class="lbl-normal" data-i18n="tab_auth">Autentikasi YouTube</span>
+              </div>
+            </button>
 
-          <div class="cookie-guide-box mono" style="margin-top: 0.5rem;">
-            <div class="guide-title">
-              <span class="lbl-dev">// INFORMASI PROFIL TEMA:</span>
-              <span class="lbl-normal">Karakteristik Tema:</span>
-            </div>
-            <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.775rem;">
-              <li style="display: flex; gap: 0.5rem;">
-                <span style="color: #f59e0b; font-weight: 700;">●</span>
-                <div>
-                  <strong style="color: var(--text-primary);">Studio Modern (Kuning &amp; Putih):</strong>
-                  <span style="color: var(--text-muted);"> Latar putih bersih (Light Studio) dengan aksen kuning studio bertenaga, font Outfit &amp; Plus Jakarta Sans, kontras tinggi dan tampilan modern editorial.</span>
+            <button type="button" class="settings-nav-tab" data-tab="appearance" id="tabBtnAppearance">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+              </svg>
+              <div class="nav-tab-info">
+                <span class="lbl-dev">[03] THEME &amp; UI</span>
+                <span class="lbl-normal">Tema Tampilan</span>
+              </div>
+            </button>
+
+            <button type="button" class="settings-nav-tab" data-tab="extension" id="tabBtnExtension">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+              <div class="nav-tab-info">
+                <span class="lbl-dev">[04] EXTENSION</span>
+                <span class="lbl-normal" data-i18n="tab_extension">Ekstensi Browser</span>
+              </div>
+            </button>
+          </nav>
+        </aside>
+
+        <!-- Right Content Area -->
+        <div class="settings-content-wrapper">
+          <div class="modal-body settings-body-scroll">
+            <!-- TAB 1: ENGINE & DOWNLOAD LIMITS -->
+            <div class="settings-tab-content" id="tabContentDownloads">
+              <div class="setting-group">
+                <label class="mono" for="downloadDirInput">
+                  <span class="lbl-dev">STORAGE_DIRECTORY_PATH:</span>
+                  <span class="lbl-normal">Folder Penyimpanan:</span>
+                </label>
+                <div class="path-box">
+                  <input type="text" id="downloadDirInput" class="input-field mono"
+                    placeholder="C:\Users\...\Downloads\StudioDownload">
+                  <button class="btn btn-secondary mono" id="openSettingsDirBtn" type="button">
+                    <span class="lbl-dev">OPEN</span>
+                    <span class="lbl-normal">Buka Folder</span>
+                  </button>
                 </div>
-              </li>
-              <li style="display: flex; gap: 0.5rem;">
-                <span style="color: #818cf8; font-weight: 700;">●</span>
-                <div>
-                  <strong style="color: var(--text-primary);">Developer Dark Zinc:</strong>
-                  <span style="color: var(--text-muted);"> Gaya konsol terminal &amp; IDE pengembang, font JetBrains Mono, syntax highlighting warna-warni ala editor kode.</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- TAB 4: COMPANION BROWSER EXTENSION -->
-        <div class="settings-tab-content" id="tabContentExtension" style="display: none;">
-          <div class="setting-group">
-            <div class="setting-header-row">
-              <label class="mono">
-                <span class="lbl-dev">STUDIO_DOWNLOAD_EXTENSION_V1.0:</span>
-                <span class="lbl-normal" data-i18n="ext_heading">Ekstensi Browser Companion (Chrome / Edge / Brave):</span>
-              </label>
-              <span class="cookie-status-tag mono" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">[READY v1.0]</span>
-            </div>
-            <p class="setting-hint mono" style="margin-bottom: 0.85rem;">
-              <span class="lbl-dev">// Tangkap aliran video streaming &amp; kirimkan langsung ke software desktop Studio Download.</span>
-              <span class="lbl-normal" data-i18n="ext_subheading">Tangkap link video streaming langsung dari tab browser aktif dan kirimkan otomatis ke Studio Download.</span>
-            </p>
-
-            <!-- Path & Open Folder Action -->
-            <div class="path-box">
-              <input type="text" id="extensionDirPathInput" class="input-field mono" readonly value="D:\Project\YT\extra">
-              <button class="btn btn-primary mono" id="openExtensionFolderBtn" type="button">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span class="lbl-dev">OPEN_EXTRA_FOLDER()</span>
-                <span class="lbl-normal" data-i18n="open_ext_folder_btn">Buka Folder Ekstensi</span>
-              </button>
-              <button class="btn btn-secondary mono" id="copyExtensionPathBtn" type="button" title="Salin Path Folder">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                <span class="lbl-dev">COPY</span>
-                <span class="lbl-normal" data-i18n="copy_path_btn">Salin Path</span>
-              </button>
-            </div>
-
-            <!-- Step-by-Step Installation Instructions -->
-            <div class="cookie-guide-box mono" style="margin-top: 1rem;">
-              <div class="guide-title">
-                <span class="lbl-dev">// CARA PASANG EKSTENSI DI BROWSER (3 LANGKAH):</span>
-                <span class="lbl-normal" data-i18n="ext_guide_title">Panduan Pemasangan Ekstensi di Chrome / Edge / Brave:</span>
+                <p class="setting-hint mono">
+                  <span class="lbl-dev">// File output disimpan otomatis di direktori lokal ini.</span>
+                  <span class="lbl-normal">File hasil unduhan disimpan otomatis di folder ini.</span>
+                </p>
               </div>
-              <ol class="guide-steps">
-                <li>
-                  <span class="step-num">[1]</span>
-                  <span>Buka tab baru di browser Anda dan buka alamat: <code class="guide-code">chrome://extensions</code> (atau <code class="guide-code">edge://extensions</code> pada Edge).</span>
-                </li>
-                <li>
-                  <span class="step-num">[2]</span>
-                  <span>Aktifkan toggle <strong>Developer mode</strong> (Mode pengembang) di sudut kanan atas halaman ekstensi browser.</span>
-                </li>
-                <li>
-                  <span class="step-num">[3]</span>
-                  <span>Klik tombol <strong>"Load unpacked"</strong> (Muat yang belum dibongkar), lalu pilih folder <strong>extra</strong> (<code class="guide-code" id="extPathSnippet">D:\Project\YT\extra</code>).</span>
-                </li>
-              </ol>
-              <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-                <span style="font-size: 0.75rem; color: var(--text-muted);">💡 Setelah terpasang, cukup klik ikon Studio Download saat menonton streaming di tab browser.</span>
-                <button class="btn btn-secondary btn-small mono" id="openBrowserExtensionsPageBtn" type="button">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+
+              <!-- 2-Column Grid for Container & Concurrency -->
+              <div class="settings-grid-2col">
+                <div class="setting-group">
+                  <label class="mono" for="defaultFormatSelect">
+                    <span class="lbl-dev">DEFAULT_CONTAINER:</span>
+                    <span class="lbl-normal">Format Kontainer Standar:</span>
+                  </label>
+                  <div class="select-wrapper">
+                    <select id="defaultFormatSelect" class="studio-select mono">
+                      <option value="mkv">MKV (Matroska Studio — Rekomendasi)</option>
+                      <option value="mp4">MP4 (MPEG-4 Universal Video)</option>
+                      <option value="mp3">MP3 (Audio Ekstraksi 320kbps)</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="setting-group">
+                  <label class="mono" for="maxConcurrentSelect">
+                    <span class="lbl-dev">CONCURRENT_DOWNLOAD_LIMIT:</span>
+                    <span class="lbl-normal">Batasan Unduhan Bersamaan:</span>
+                  </label>
+                  <div class="select-wrapper">
+                    <select id="maxConcurrentSelect" class="studio-select mono">
+                      <option value="1">1 Unduhan (Satu per satu / Antrean)</option>
+                      <option value="2" selected>2 Unduhan Sekaligus (Standar)</option>
+                      <option value="3">3 Unduhan Sekaligus</option>
+                      <option value="5">5 Unduhan Sekaligus</option>
+                      <option value="0">Tanpa Batas (Semua Sekaligus)</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bandwidth Speed Limiter -->
+              <div class="setting-group">
+                <label class="mono" for="speedLimitSelect">
+                  <span class="lbl-dev">BANDWIDTH_SPEED_LIMIT:</span>
+                  <span class="lbl-normal">Limit Kecepatan Unduh (Speed Limit):</span>
+                </label>
+                <div class="select-wrapper">
+                  <select id="speedLimitSelect" class="studio-select mono">
+                    <option value="0" selected>Tanpa Batas (Kecepatan Penuh / Unlimited)</option>
+                    <option value="1024">1 MB/s (1,024 KB/s)</option>
+                    <option value="2048">2 MB/s (2,048 KB/s)</option>
+                    <option value="5120">5 MB/s (5,120 KB/s)</option>
+                    <option value="10240">10 MB/s (10,240 KB/s)</option>
+                    <option value="25600">25 MB/s (25,600 KB/s)</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
-                  <span class="lbl-normal">Salin chrome://extensions</span>
-                </button>
+                </div>
+                <p class="setting-hint mono">
+                  <span class="lbl-dev">// Batasi kecepatan unduh yt-dlp agar koneksi internet tetap lancar.</span>
+                  <span class="lbl-normal">Membatasi konsumsi bandwidth agar koneksi internet tetap lancar untuk aktivitas lain.</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- TAB 2: YOUTUBE AUTH & COOKIES -->
+            <div class="settings-tab-content" id="tabContentAuth" style="display: none;">
+              <div class="setting-group" id="cookieSettingGroup">
+                <div class="setting-header-row">
+                  <label class="mono" for="cookieSourceSelect">
+                    <span class="lbl-dev">YOUTUBE_AUTH_COOKIES:</span>
+                    <span class="lbl-normal" data-i18n="auth_cookies_label">Autentikasi YouTube (Anti Bot):</span>
+                  </label>
+                  <span class="cookie-status-tag mono" id="cookieStatusTag">[STATUS: NONE]</span>
+                </div>
+
+                <div class="select-wrapper">
+                  <select id="cookieSourceSelect" class="studio-select mono">
+                    <option value="auto">AUTO // File cookies.txt (Rekomendasi Utama — Bebas Bot)</option>
+                    <option value="browser">BROWSER // Ambil dari Browser (Membutuhkan Browser Ditutup)</option>
+                    <option value="none">DISABLED // Tanpa Autentikasi</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+
+                <!-- Browser Selection row (visible when browser is selected) -->
+                <div id="browserSelectRow" style="display: none; margin-top: 0.5rem;">
+                  <div class="select-wrapper">
+                    <select id="cookieBrowserSelect" class="studio-select mono">
+                      <option value="chrome">Google Chrome</option>
+                      <option value="edge">Microsoft Edge</option>
+                      <option value="firefox">Mozilla Firefox</option>
+                      <option value="brave">Brave Browser</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                  <p class="setting-hint mono" style="color: var(--accent-danger); margin-top: 0.35rem;">
+                    <span class="lbl-dev">// INFO: Chrome terbaru memproteksi DB akun (DPAPI). Gunakan opsi AUTO // File cookies.txt di bawah.</span>
+                    <span class="lbl-normal">Catatan: Chrome terbaru memproteksi database akun (DPAPI). Disarankan memakai opsi file cookies.txt di bawah.</span>
+                  </p>
+                </div>
+
+                <!-- Step-by-Step Instructions Box -->
+                <div class="cookie-guide-box mono">
+                  <div class="guide-title">
+                    <span class="lbl-dev">// CARA MELEWATI BOT CHECK YOUTUBE (30 DETIK):</span>
+                    <span class="lbl-normal" data-i18n="auth_guide_title">Cara Mengatasi Bot Check YouTube (30 Detik):</span>
+                  </div>
+                  <ol class="guide-steps">
+                    <li>
+                      <span class="step-num">[1]</span>
+                      <span>Pasang ekstensi Chrome: <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener" class="guide-link">Get cookies.txt LOCALLY ↗</a></span>
+                    </li>
+                    <li>
+                      <span class="step-num">[2]</span>
+                      <span>Buka tab <strong>YouTube</strong>, klik ikon ekstensi tersebut di browser, lalu klik <strong>"Copy"</strong>.</span>
+                    </li>
+                    <li>
+                      <span class="step-num">[3]</span>
+                      <span>Tempel (Ctrl+V) teks cookies ke kolom di bawah ini, lalu klik <strong>Simpan File Cookies</strong>.</span>
+                    </li>
+                  </ol>
+                </div>
+
+                <!-- Quick Paste Area for cookies.txt -->
+                <div class="cookie-paste-box" id="cookiePasteBox" style="margin-top: 0.5rem;">
+                  <textarea id="cookiePasteInput" class="cookie-textarea mono" rows="3"
+                    placeholder="Tempel teks cookies di sini (# Netscape HTTP Cookie File...)" data-i18n-placeholder="cookies_placeholder" spellcheck="false"></textarea>
+                  <div class="cookie-btn-row">
+                    <button class="btn btn-secondary mono btn-small" id="saveCookiePasteBtn" type="button">
+                      <span class="lbl-dev">SAVE_COOKIES_TXT()</span>
+                      <span class="lbl-normal" data-i18n="save_cookies_btn">Simpan File Cookies</span>
+                    </button>
+                    <button class="btn-ghost mono btn-small" id="deleteCookieBtn" type="button" style="color:var(--accent-danger)">
+                      <span class="lbl-dev">[DELETE_COOKIES]</span>
+                      <span class="lbl-normal" data-i18n="delete_cookies_btn">Hapus Cookies</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: THEME & UI -->
+            <div class="settings-tab-content" id="tabContentAppearance" style="display: none;">
+              <div class="setting-group">
+                <label class="mono" for="themeSelect">
+                  <span class="lbl-dev">UI_THEME_PROFILE:</span>
+                  <span class="lbl-normal" data-i18n="theme_label">Tema Tampilan Aplikasi:</span>
+                </label>
+                <div class="select-wrapper">
+                  <select id="themeSelect" class="studio-select mono">
+                    <option value="modern-yellow">Studio Modern // Kuning Modern &amp; Profesional (Rekomendasi)</option>
+                    <option value="developer-zinc">Developer Dark Zinc // Terminal IDE Code Style</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="setting-group" style="margin-top: 1rem;">
+                <label class="mono" for="languageSelect">
+                  <span class="lbl-dev">UI_LANGUAGE_LOCALE:</span>
+                  <span class="lbl-normal" data-i18n="language_label">Bahasa Antarmuka (Language):</span>
+                </label>
+                <div class="select-wrapper">
+                  <select id="languageSelect" class="studio-select mono">
+                    <option value="id">🇮🇩 Bahasa Indonesia (Indonesian)</option>
+                    <option value="en">🇺🇸 English (US)</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+                <p class="setting-hint mono">
+                  <span class="lbl-dev">// Language switches dynamically across all views &amp; notifications.</span>
+                  <span class="lbl-normal">Teks aplikasi otomatis diperbarui secara instan.</span>
+                </p>
+              </div>
+
+              <div class="cookie-guide-box mono" style="margin-top: 0.5rem;">
+                <div class="guide-title">
+                  <span class="lbl-dev">// INFORMASI PROFIL TEMA:</span>
+                  <span class="lbl-normal">Karakteristik Tema:</span>
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.775rem;">
+                  <li style="display: flex; gap: 0.5rem;">
+                    <span style="color: #f59e0b; font-weight: 700;">●</span>
+                    <div>
+                      <strong style="color: var(--text-primary);">Studio Modern (Kuning &amp; Putih):</strong>
+                      <span style="color: var(--text-muted);"> Latar putih bersih (Light Studio) dengan aksen kuning studio bertenaga, font Outfit &amp; Plus Jakarta Sans, kontras tinggi dan tampilan modern editorial.</span>
+                    </div>
+                  </li>
+                  <li style="display: flex; gap: 0.5rem;">
+                    <span style="color: #818cf8; font-weight: 700;">●</span>
+                    <div>
+                      <strong style="color: var(--text-primary);">Developer Dark Zinc:</strong>
+                      <span style="color: var(--text-muted);"> Gaya konsol terminal &amp; IDE pengembang, font JetBrains Mono, syntax highlighting warna-warni ala editor kode.</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- TAB 4: COMPANION BROWSER EXTENSION -->
+            <div class="settings-tab-content" id="tabContentExtension" style="display: none;">
+              <div class="setting-group">
+                <div class="setting-header-row">
+                  <label class="mono">
+                    <span class="lbl-dev">STUDIO_DOWNLOAD_EXTENSION_V1.0:</span>
+                    <span class="lbl-normal" data-i18n="ext_heading">Ekstensi Browser Companion (Chrome / Edge / Brave):</span>
+                  </label>
+                  <span class="cookie-status-tag mono" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">[READY v1.0]</span>
+                </div>
+                <p class="setting-hint mono" style="margin-bottom: 0.85rem;">
+                  <span class="lbl-dev">// Tangkap aliran video streaming &amp; kirimkan langsung ke software desktop Studio Download.</span>
+                  <span class="lbl-normal" data-i18n="ext_subheading">Tangkap link video streaming langsung dari tab browser aktif dan kirimkan otomatis ke Studio Download.</span>
+                </p>
+
+                <!-- Path & Open Folder Action -->
+                <div class="path-box">
+                  <input type="text" id="extensionDirPathInput" class="input-field mono" readonly value="D:\Project\YT\extra">
+                  <button class="btn btn-primary mono" id="openExtensionFolderBtn" type="button">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span class="lbl-dev">OPEN_EXTRA_FOLDER()</span>
+                    <span class="lbl-normal" data-i18n="open_ext_folder_btn">Buka Folder Ekstensi</span>
+                  </button>
+                  <button class="btn btn-secondary mono" id="copyExtensionPathBtn" type="button" title="Salin Path Folder">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span class="lbl-dev">COPY</span>
+                    <span class="lbl-normal" data-i18n="copy_path_btn">Salin Path</span>
+                  </button>
+                </div>
+
+                <!-- Step-by-Step Installation Instructions -->
+                <div class="cookie-guide-box mono" style="margin-top: 1rem;">
+                  <div class="guide-title">
+                    <span class="lbl-dev">// CARA PASANG EKSTENSI DI BROWSER (3 LANGKAH):</span>
+                    <span class="lbl-normal" data-i18n="ext_guide_title">Panduan Pemasangan Ekstensi di Chrome / Edge / Brave:</span>
+                  </div>
+                  <ol class="guide-steps">
+                    <li>
+                      <span class="step-num">[1]</span>
+                      <span>Buka tab baru di browser Anda dan buka alamat: <code class="guide-code">chrome://extensions</code> (atau <code class="guide-code">edge://extensions</code> pada Edge).</span>
+                    </li>
+                    <li>
+                      <span class="step-num">[2]</span>
+                      <span>Aktifkan toggle <strong>Developer mode</strong> (Mode pengembang) di sudut kanan atas halaman ekstensi browser.</span>
+                    </li>
+                    <li>
+                      <span class="step-num">[3]</span>
+                      <span>Klik tombol <strong>"Load unpacked"</strong> (Muat yang belum dibongkar), lalu pilih folder <strong>extra</strong> (<code class="guide-code" id="extPathSnippet">D:\Project\YT\extra</code>).</span>
+                    </li>
+                  </ol>
+                  <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">💡 Setelah terpasang, cukup klik ikon Studio Download saat menonton streaming di tab browser.</span>
+                    <button class="btn btn-secondary btn-small mono" id="openBrowserExtensionsPageBtn" type="button">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      <span class="lbl-normal">Salin chrome://extensions</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          <div class="modal-footer settings-footer-dock">
+            <button class="btn btn-secondary mono" id="cancelSettingsBtn" type="button">
+              <span class="lbl-dev">CANCEL</span>
+              <span class="lbl-normal" data-i18n="cancel_settings_btn">Batal</span>
+            </button>
+            <button class="btn btn-primary mono" id="saveSettingsBtn" type="button">
+              <span class="lbl-dev">SAVE_CONFIG()</span>
+              <span class="lbl-normal" data-i18n="save_settings_btn">Simpan Pengaturan</span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary mono" id="cancelSettingsBtn">
-          <span class="lbl-dev">CANCEL</span>
-          <span class="lbl-normal" data-i18n="cancel_settings_btn">Batal</span>
-        </button>
-        <button class="btn btn-primary mono" id="saveSettingsBtn">
-          <span class="lbl-dev">SAVE_CONFIG()</span>
-          <span class="lbl-normal" data-i18n="save_settings_btn">Simpan Pengaturan</span>
-        </button>
       </div>
     </div>
   </div>
@@ -981,7 +1007,7 @@
               <span data-i18n="username_label">Nama / Username:</span>
               <span style="color: var(--accent-danger); font-size: 0.7rem;">*Wajib</span>
             </label>
-            <input type="text" id="onboardingUsername" class="input-field mono" placeholder="Contoh: Alex, @editor_pro, Faisal..." required autofocus style="font-size: 0.9rem; padding: 0.65rem 0.85rem;">
+            <input type="text" id="onboardingUsername" class="input-field mono" placeholder="Contoh: Alex, @editor_pro, @em.n.ef..." required autofocus style="font-size: 0.9rem; padding: 0.65rem 0.85rem;">
           </div>
 
           <div class="setting-group" style="margin-bottom: 1rem;">
@@ -990,12 +1016,12 @@
             </label>
             <div class="select-wrapper">
               <select id="onboardingRole" class="studio-select mono">
-                <option value="Video Editor (Premiere / DaVinci)">🎬 Video Editor (Premiere / DaVinci)</option>
-                <option value="Content Creator (YouTube / TikTok)">📱 Content Creator (YouTube / TikTok)</option>
-                <option value="Student / Pelajar">🎓 Student / Pelajar</option>
-                <option value="Software Developer / Engineer">💻 Software Developer / Engineer</option>
-                <option value="Casual Media Enthusiast">🎧 Penikmat Musik &amp; Video</option>
-                <option value="Lainnya">✨ Lainnya</option>
+                <option value="Video Editor (Premiere / DaVinci)">[EDITOR] Video Editor (Premiere / DaVinci)</option>
+                <option value="Content Creator (YouTube / TikTok)">[CREATOR] Content Creator (YouTube / TikTok)</option>
+                <option value="Student / Pelajar">[STUDENT] Pelajar / Mahasiswa</option>
+                <option value="Software Developer / Engineer">[DEV] Software Developer / Engineer</option>
+                <option value="Casual Media Enthusiast">[MEDIA] Penikmat Musik &amp; Video</option>
+                <option value="Lainnya">[GENERAL] Pengguna Umum / Lainnya</option>
               </select>
               <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>

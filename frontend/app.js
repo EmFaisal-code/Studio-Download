@@ -7,6 +7,8 @@ let activeMode = 'video'; // 'video' or 'audio'
 let ws = null;
 let activeTasksMap = {};
 
+const DEFAULT_VIDEO_FALLBACK_THUMB = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90"><rect width="160" height="90" fill="%2318181b"/><rect x="4" y="4" width="152" height="82" rx="6" fill="%2327272a" stroke="%233f3f46" stroke-width="1.5"/><circle cx="80" cy="45" r="18" fill="%2309090b" stroke="%2352525b" stroke-width="1.5"/><polygon points="76,37 88,45 76,53" fill="%23facc15"/></svg>`;
+
 // DOM Elements
 const videoUrlInput = document.getElementById('videoUrlInput');
 const pasteBtn = document.getElementById('pasteBtn');
@@ -567,7 +569,8 @@ async function analyzeVideo() {
 
 // --- Render Analysis Result ---
 function renderAnalysisResult(info) {
-  videoThumb.src = info.thumbnail;
+  videoThumb.src = (info.thumbnail && (info.thumbnail.startsWith('http://') || info.thumbnail.startsWith('https://') || info.thumbnail.startsWith('data:'))) ? info.thumbnail : DEFAULT_VIDEO_FALLBACK_THUMB;
+  videoThumb.onerror = () => { videoThumb.src = DEFAULT_VIDEO_FALLBACK_THUMB; };
   videoDuration.textContent = info.duration;
   videoTitle.textContent = info.title;
   const customTitleInput = document.getElementById('customTitleInput');
@@ -1043,7 +1046,9 @@ function renderHistory() {
     const el = document.createElement('div');
     el.className = 'history-item';
 
-    const thumb = item.thumbnail || 'https://via.placeholder.com/160x90/18181b/ffffff?text=Video';
+    const thumb = (item.thumbnail && (item.thumbnail.startsWith('http://') || item.thumbnail.startsWith('https://') || item.thumbnail.startsWith('data:')))
+      ? item.thumbnail
+      : DEFAULT_VIDEO_FALLBACK_THUMB;
 
     const dateDisplay = (currentSortCriteria === 'date_updated' && item.updated_at)
       ? `Upd: ${item.updated_at}`
@@ -1053,7 +1058,7 @@ function renderHistory() {
     const bitrateDisplay = item.bitrate ? ` • ${item.bitrate}` : '';
 
     el.innerHTML = `
-      <img class="history-thumb" src="${thumb}" alt="Thumbnail">
+      <img class="history-thumb" src="${thumb}" alt="" onerror="this.onerror=null;this.src='${DEFAULT_VIDEO_FALLBACK_THUMB}';">
       <div class="history-details mono">
         <div class="history-title" title="${item.title}">${item.title}</div>
         <div class="history-meta">
@@ -1125,7 +1130,10 @@ function openConfirmModal({
     if (item) {
       // Single Item Mode
       confirmItemPreview.style.display = 'flex';
-      confirmItemThumb.src = item.thumbnail || 'https://via.placeholder.com/160x90/18181b/ffffff?text=Video';
+      confirmItemThumb.src = (item.thumbnail && (item.thumbnail.startsWith('http://') || item.thumbnail.startsWith('https://') || item.thumbnail.startsWith('data:')))
+        ? item.thumbnail
+        : DEFAULT_VIDEO_FALLBACK_THUMB;
+      confirmItemThumb.onerror = () => { confirmItemThumb.src = DEFAULT_VIDEO_FALLBACK_THUMB; };
       confirmItemTitle.textContent = item.title || 'Media Video/Audio';
       
       const dur = item.duration && item.duration !== '--' ? ` • ${item.duration}` : '';
