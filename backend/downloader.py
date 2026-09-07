@@ -443,10 +443,22 @@ class DownloadManager:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=True)
             except Exception as ydl_err:
-                if not is_yt and (url.split('?')[0].lower().endswith(('.m3u8', '.ts')) or any(k in url.lower() for k in ('/hls/', '.m3u8', '/manifest/'))):
-                    self._download_hls_fallback(task_id, url, options, out_dir, temp_dir, custom_headers, cancel_ev)
-                    return
-                raise ydl_err
+                err_str = str(ydl_err)
+                if any(t in err_str.lower() for t in ("curl: (77)", "transporterror", "trust anchors", "cafile")) and 'impersonate' in ydl_opts:
+                    retry_opts = ydl_opts.copy()
+                    retry_opts.pop('impersonate', None)
+                    retry_opts.pop('extractor_args', None)
+                    try:
+                        with yt_dlp.YoutubeDL(retry_opts) as retry_ydl:
+                            info = retry_ydl.extract_info(url, download=True)
+                    except Exception as retry_e:
+                        ydl_err = retry_e
+
+                if not info:
+                    if not is_yt and (url.split('?')[0].lower().endswith(('.m3u8', '.ts')) or any(k in url.lower() for k in ('/hls/', '.m3u8', '/manifest/'))):
+                        self._download_hls_fallback(task_id, url, options, out_dir, temp_dir, custom_headers, cancel_ev)
+                        return
+                    raise ydl_err
 
             # Prioritize real user/task title over yt-dlp's generic placeholder (e.g. index-f1)
             raw_info_title = (info and info.get("title")) or ""

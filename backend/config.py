@@ -21,6 +21,59 @@ USERS_FILE = BASE_DIR / "users.json"
 DEFAULT_DOWNLOAD_DIR = Path.home() / "Downloads" / "StudioDownload"
 DEFAULT_COOKIE_FILE = BASE_DIR / "cookies.txt"
 
+# Configure SSL certificates for libcurl (curl_cffi), requests, and yt-dlp
+def _init_ssl_certs():
+    try:
+        import certifi
+        ca_path = ""
+        candidates = [
+            get_bundle_dir() / "_internal" / "certifi" / "cacert.pem",
+            get_bundle_dir() / "certifi" / "cacert.pem",
+            get_app_dir() / "_internal" / "certifi" / "cacert.pem",
+            get_app_dir() / "certifi" / "cacert.pem",
+            get_app_dir() / "cacert.pem",
+        ]
+        try:
+            candidates.append(Path(certifi.where()))
+        except Exception:
+            pass
+
+        for c in candidates:
+            if c and c.exists() and c.stat().st_size > 1000:
+                ca_path = str(c.resolve())
+                break
+
+        # Fallback for Windows: Export system Root certificates if no bundle exists
+        if not ca_path and sys.platform == "win32":
+            try:
+                import ssl
+                certs = ssl.enum_certificates("ROOT")
+                if certs:
+                    fallback_file = get_app_dir() / "_internal" / "certifi" / "cacert.pem"
+                    fallback_file.parent.mkdir(parents=True, exist_ok=True)
+                    with open(fallback_file, "w", encoding="utf-8") as f:
+                        for cert in certs:
+                            f.write(ssl.DER_cert_to_PEM_cert(cert[0]))
+                    if fallback_file.exists() and fallback_file.stat().st_size > 1000:
+                        ca_path = str(fallback_file.resolve())
+            except Exception:
+                pass
+
+        if ca_path:
+            os.environ["SSL_CERT_FILE"] = ca_path
+            os.environ["CURL_CA_BUNDLE"] = ca_path
+            os.environ["REQUESTS_CA_BUNDLE"] = ca_path
+            certifi.where = lambda: ca_path
+            try:
+                import curl_cffi.curl
+                curl_cffi.curl.DEFAULT_CACERT = ca_path
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+_init_ssl_certs()
+
 DEFAULT_SETTINGS = {
     "download_dir": str(DEFAULT_DOWNLOAD_DIR),
     "default_resolution": "best",

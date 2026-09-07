@@ -73,27 +73,38 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
     is_stream = is_stream_url(url)
 
     info = None
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-        except Exception as e:
-            raw_err = str(e)
+    except Exception as e:
+        raw_err = str(e)
+        # Fallback: if impersonate / curl_cffi hits curl 77 (bad CA) or TransportError, retry cleanly without impersonate
+        if any(term in raw_err.lower() for term in ("curl: (77)", "transporterror", "trust anchors", "cafile")) and 'impersonate' in ydl_opts:
+            retry_opts = ydl_opts.copy()
+            retry_opts.pop('impersonate', None)
+            retry_opts.pop('extractor_args', None)
+            try:
+                with yt_dlp.YoutubeDL(retry_opts) as retry_ydl:
+                    info = retry_ydl.extract_info(url, download=False)
+            except Exception as retry_e:
+                raw_err = str(retry_e)
+
+        if not info:
             clean_err = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', raw_err).strip()
             if is_stream:
-                # Do not crash on stream URLs (e.g. Cloudflare protected CDNs)
-                # Fall back gracefully to direct stream metadata
                 info = None
             else:
-                if "Failed to decrypt with DPAPI" in clean_err or "DPAPI" in clean_err:
-                    raise ValueError("CHROME_DPAPI_BLOCKED: Google Chrome versi terbaru di Windows memblokir pembacaan cookies langsung dari database (App-Bound DPAPI Encryption). Solusi: Gunakan opsi 'AUTO // File cookies.txt' di menu CONFIG dengan ekstensi 'Get cookies.txt LOCALLY'.")
-                if "Could not copy" in clean_err and "cookie database" in clean_err:
+                err_low = clean_err.lower()
+                if "failed to decrypt with dpapi" in err_low or "dpapi" in err_low:
+                    raise ValueError("CHROME_DPAPI_BLOCKED: Google Chrome versi terbaru di Windows memblokir pembacaan cookies langsung dari database (App-Bound DPAPI Encryption). Solusi: Gunakan opsi 'AUTO // File cookies.txt' di menu CONFIG dengan ekstensi Studio Download.")
+                if "could not copy" in err_low and "cookie database" in err_low:
                     raise ValueError("BROWSER_LOCKED: Database cookie browser terkunci oleh Windows karena browser sedang dibuka/berjalan. Tutup browser sepenuhnya terlebih dahulu, ATAU gunakan opsi 'AUTO // File cookies.txt' di menu CONFIG agar browser tidak perlu ditutup.")
-                if "Sign in to confirm you're not a bot" in clean_err or "not a bot" in clean_err:
+                if "sign in to confirm you're not a bot" in err_low or "not a bot" in err_low:
                     raise ValueError("BOT_CHECK_REQUIRED: YouTube mewajibkan verifikasi autentikasi (Sign in to confirm you're not a bot). Silakan gunakan file cookies.txt atau impor cookie browser di menu CONFIG.")
-                if "Private video" in clean_err:
+                if "private video" in err_low:
                     raise ValueError("Video ini bersifat privat (Private Video). Diperlukan login akun yang memiliki izin akses.")
-                if "Video unavailable" in clean_err:
-                    raise ValueError("Video tidak tersedia atau telah dihapus.")
+                if "video unavailable" in err_low or "is unavailable" in err_low:
+                    raise ValueError("Video tidak tersedia atau telah dihapus oleh pemiliknya.")
                 raise ValueError(f"Gagal menganalisis link: {clean_err}")
 
     if not info:

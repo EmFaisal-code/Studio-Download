@@ -69,6 +69,8 @@ def build():
         f"--icon={BASE_DIR / 'app_icon.ico'}",
         f"--add-data={frontend_dir};frontend",
         f"--add-data={BASE_DIR / 'app_icon.ico'};.",
+        "--collect-all=certifi",
+        "--collect-all=curl_cffi",
     ]
 
     for h in hidden_imports:
@@ -89,6 +91,22 @@ def build():
     if (BASE_DIR / "app_icon.ico").exists():
         print("[*] Menyalin app_icon.ico ke direktori portable...")
         shutil.copy2(BASE_DIR / "app_icon.ico", dist_dir / "app_icon.ico")
+
+    # Ensure SSL cacert.pem is present in _internal/certifi and root
+    try:
+        import certifi
+        ca_source = Path(certifi.where())
+        if ca_source.exists():
+            for target_ca in [
+                dist_dir / "_internal" / "certifi" / "cacert.pem",
+                dist_dir / "certifi" / "cacert.pem",
+                dist_dir / "cacert.pem"
+            ]:
+                target_ca.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ca_source, target_ca)
+            print("[*] Menyalin SSL certificate cacert.pem ke direktori portable...")
+    except Exception as e:
+        print(f"[!] Gagal menyalin cacert.pem: {e}")
 
     # 3. Copy FFmpeg binaries into the portable directory
     if ffmpeg_src.exists():
