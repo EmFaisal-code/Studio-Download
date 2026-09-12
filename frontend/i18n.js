@@ -19,22 +19,22 @@ const i18nData = {
     lang_badge: '🇮🇩 ID',
 
     // Hero Section
-    hero_eyebrow: 'YouTube 4K 60fps Media Extractor',
+    hero_eyebrow: 'YouTube & TikTok HD Media Extractor',
     hero_title: 'Studio',
     hero_title_accent: 'Download',
-    hero_desc: 'Engine ekstraksi media YouTube hingga <strong>4K 60fps</strong> (VP9 / H.264) dan audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Output format universal & kompatibel dengan berbagai software video editor (NLE) serta media player tanpa black screen.',
+    hero_desc: 'Engine ekstraksi media YouTube & TikTok hingga <strong>4K / HD (No Watermark)</strong> dan audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Output format universal & kompatibel dengan berbagai software video editor (NLE) serta media player tanpa black screen.',
     pill_4k: '4K 60fps & HDR',
     pill_lossless: 'Audio Lossless 320kbps',
     pill_nle: 'Universal Video Editor Ready',
     pill_bot: 'Bypass Bot Shield',
 
     // Input Bar
-    url_placeholder: 'Tempel tautan YouTube atau link streaming (HLS .m3u8, web video)...',
+    url_placeholder: 'Tempel tautan YouTube, TikTok (vt.tiktok.com), atau streaming (.m3u8)...',
     paste_btn: 'Tempel',
     paste_btn_title: 'Tempel dari Clipboard',
     analyze_btn: 'Analisis Video',
     analyzing_btn: 'Menganalisis...',
-    url_ready_text: 'YouTube & Web Stream Ready',
+    url_ready_text: 'YouTube, TikTok & Web Stream Ready',
     header_referer_btn: '⚙ Header / Referer (Opsional) ▾',
     referer_placeholder: 'Referer URL (Opsional, gunakan jika website memblokir dengan 403 Forbidden)...',
 
@@ -185,22 +185,22 @@ const i18nData = {
     lang_badge: '🇺🇸 EN',
 
     // Hero Section
-    hero_eyebrow: 'YouTube 4K 60fps Media Extractor',
+    hero_eyebrow: 'YouTube & TikTok HD Media Extractor',
     hero_title: 'Studio',
     hero_title_accent: 'Download',
-    hero_desc: 'High-fidelity YouTube extraction engine supporting up to <strong>4K 60fps</strong> (VP9 / H.264) and audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Universal output compatible with all major video editors (NLE) and media players without black screen.',
+    hero_desc: 'High-fidelity YouTube & TikTok extraction engine supporting up to <strong>4K / HD (No Watermark)</strong> and audio <strong>AAC 44.1kHz / MP3 320kbps</strong>. Universal output compatible with all major video editors (NLE) and media players without black screen.',
     pill_4k: '4K 60fps & HDR',
     pill_lossless: 'Audio Lossless 320kbps',
     pill_nle: 'Universal Video Editor Ready',
     pill_bot: 'Bypass Bot Shield',
 
     // Input Bar
-    url_placeholder: 'Paste YouTube link or streaming URL (HLS .m3u8, web video)...',
+    url_placeholder: 'Paste YouTube link, TikTok VT (vt.tiktok.com), or streaming URL (.m3u8)...',
     paste_btn: 'Paste',
     paste_btn_title: 'Paste from Clipboard',
     analyze_btn: 'Analyze Video',
     analyzing_btn: 'Analyzing...',
-    url_ready_text: 'YouTube & Web Stream Ready',
+    url_ready_text: 'YouTube, TikTok & Web Stream Ready',
     header_referer_btn: '⚙ Header / Referer (Optional) ▾',
     referer_placeholder: 'Referer URL (Optional, use if website blocks with 403 Forbidden)...',
 

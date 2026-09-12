@@ -215,11 +215,14 @@ function setupEventListeners() {
     const urlTypeIcon = document.getElementById('urlTypeIcon');
     if (!urlTypeBadge) return;
     if (!val) {
-      urlTypeBadge.textContent = 'YouTube & Web Stream Ready';
+      urlTypeBadge.textContent = 'YouTube, TikTok & Web Stream Ready';
       urlTypeIcon.textContent = '▶';
     } else if (val.includes('youtube.com') || val.includes('youtu.be')) {
       urlTypeBadge.textContent = 'YouTube Platform Detected';
       urlTypeIcon.textContent = '🔴';
+    } else if (val.includes('tiktok.com') || val.includes('vt.tiktok.com')) {
+      urlTypeBadge.textContent = 'TikTok VT Detected (No Watermark)';
+      urlTypeIcon.textContent = '🎵';
     } else if (val.includes('.m3u8') || val.includes('/hls/')) {
       urlTypeBadge.textContent = 'HLS M3U8 Stream Detected';
       urlTypeIcon.textContent = '⚡';

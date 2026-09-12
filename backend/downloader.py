@@ -7,8 +7,9 @@ import time
 from pathlib import Path
 import yt_dlp
 
-from backend.config import get_settings, get_ydl_cookie_opts
+from backend.config import get_settings, get_ydl_cookie_opts, get_bundle_dir
 from backend.history import add_history_entry, update_history_entry
+from backend.parser import format_bytes, is_tiktok_url, fetch_tiktok_tikwm
 
 # Global active downloads dictionary: {task_id: task_data}
 active_tasks = {}
@@ -135,6 +136,14 @@ class DownloadManager:
                 bitrate = "Standard"
 
         is_yt = ("youtube.com" in url.lower() or "youtu.be" in url.lower())
+        is_tt = is_tiktok_url(url)
+        if is_yt:
+            eta_init = "Menghubungkan ke YouTube..."
+        elif is_tt:
+            eta_init = "Menghubungkan ke TikTok (TikWM)..."
+        else:
+            eta_init = "Menghubungkan ke server stream..."
+
         task_data = {
             "id": task_id,
             "url": url,
@@ -146,7 +155,7 @@ class DownloadManager:
             "status": "starting",
             "progress": 0,
             "speed": "0 KB/s",
-            "eta": "Menghubungkan ke YouTube..." if is_yt else "Menghubungkan ke server stream...",
+            "eta": eta_init,
             "downloaded": "0 MB",
             "total": filesize_approx or "0 MB",
             "filesize_bytes": 0,
@@ -277,6 +286,16 @@ class DownloadManager:
         try:
             os.makedirs(temp_dir, exist_ok=True)
             settings = get_settings()
+
+            # Dedicated fast no-watermark download for TikTok
+            if is_tiktok_url(url):
+                try:
+                    self._download_tiktok(task_id, url, options, out_dir, temp_dir, cancel_ev)
+                    return
+                except DownloadCancelledException:
+                    raise
+                except Exception as tt_err:
+                    print(f"[!] TikWM direct download failed ({tt_err}), falling back to yt-dlp...")
 
             # Immediate status broadcast
             task["status"] = "starting"
@@ -588,6 +607,179 @@ class DownloadManager:
                     pass
 
             self._start_next_queued_task()
+
+    def _download_tiktok(self, task_id: str, url: str, options: dict, out_dir: str, temp_dir: str, cancel_ev: threading.Event):
+        import urllib.request
+        import subprocess
+
+        task = active_tasks.get(task_id)
+        if not task:
+            return
+
+        task["status"] = "starting"
+        task["eta"] = "Menghubungkan ke server TikTok CDN (TikWM)..."
+        task["speed"] = "--"
+        broadcast_progress(task_id, task)
+
+        tt_data = fetch_tiktok_tikwm(url)
+        if not tt_data:
+            raise RuntimeError("Gagal mengambil data TikTok dari TikWM.")
+
+        mode = options.get("mode", "video")
+        req_format = options.get("format", "mp4").lower()
+        format_id = options.get("format_id", "tiktok_standard")
+
+        # Select target URL
+        if mode == "audio":
+            dl_url = tt_data.get("music")
+            if not dl_url:
+                dl_url = tt_data.get("play") or tt_data.get("hdplay")
+            raw_filename = "audio_raw.mp3"
+        else:
+            if format_id == "tiktok_hd" and tt_data.get("hdplay"):
+                dl_url = tt_data.get("hdplay")
+            else:
+                dl_url = tt_data.get("play") or tt_data.get("hdplay")
+            raw_filename = "video_raw.mp4"
+
+        if not dl_url:
+            raise RuntimeError("URL media TikTok tidak ditemukan.")
+
+        task["status"] = "downloading"
+        task["eta"] = "Mengunduh media TikTok (No Watermark)..."
+        broadcast_progress(task_id, task)
+
+        temp_file = os.path.join(temp_dir, raw_filename)
+        req = urllib.request.Request(dl_url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            "Referer": "https://www.tiktok.com/"
+        })
+
+        speed_limit_kb = get_settings().get("download_speed_limit", 0)
+        max_bytes_per_sec = int(speed_limit_kb) * 1024 if speed_limit_kb else 0
+
+        with urllib.request.urlopen(req, timeout=25) as resp, open(temp_file, "wb") as f_out:
+            total_size = int(resp.headers.get("content-length", 0))
+            downloaded = 0
+            start_time = time.time()
+            last_update_time = start_time
+            bytes_since_last = 0
+            chunk_size = 65536
+
+            while True:
+                if cancel_ev and cancel_ev.is_set():
+                    raise DownloadCancelledException("Unduhan dibatalkan oleh pengguna.")
+
+                chunk_start = time.time()
+                chunk = resp.read(chunk_size)
+                if not chunk:
+                    break
+
+                f_out.write(chunk)
+                downloaded += len(chunk)
+                bytes_since_last += len(chunk)
+
+                if max_bytes_per_sec > 0:
+                    chunk_time = time.time() - chunk_start
+                    expected_time = len(chunk) / max_bytes_per_sec
+                    if expected_time > chunk_time:
+                        time.sleep(expected_time - chunk_time)
+
+                now = time.time()
+                if now - last_update_time >= 0.35 or (total_size and downloaded >= total_size):
+                    elapsed = now - last_update_time
+                    speed_bps = bytes_since_last / elapsed if elapsed > 0 else 0
+                    speed_str = format_speed(speed_bps)
+                    progress = round((downloaded / total_size) * 100, 1) if total_size > 0 else 50.0
+
+                    if total_size > 0 and speed_bps > 0:
+                        eta_sec = int((total_size - downloaded) / speed_bps)
+                        eta_str = format_time(eta_sec)
+                    else:
+                        eta_str = "--"
+
+                    task["downloaded"] = format_bytes(downloaded)
+                    task["total"] = format_bytes(total_size) if total_size > 0 else format_bytes(downloaded)
+                    task["progress"] = progress
+                    task["speed"] = speed_str
+                    task["eta"] = eta_str
+                    broadcast_progress(task_id, task)
+
+                    last_update_time = now
+                    bytes_since_last = 0
+
+        author_name = tt_data.get("author", {}).get("unique_id") or "tiktok"
+        tt_title = tt_data.get("title") or options.get("title") or f"TikTok_{author_name}"
+        clean_title = clean_filename(tt_title)
+
+        source_file = temp_file
+        final_ext = req_format
+
+        # Post-processing
+        ffmpeg_bin = shutil.which("ffmpeg") or str(get_bundle_dir() / "ffmpeg.exe") or "ffmpeg"
+
+        if mode == "audio":
+            if req_format in ["mp3", "m4a"]:
+                task["status"] = "muxing"
+                task["eta"] = f"Mengonversi audio ke {req_format.upper()}..."
+                broadcast_progress(task_id, task)
+
+                conv_file = os.path.join(temp_dir, f"audio.{req_format}")
+                if req_format == "mp3":
+                    cmd = [ffmpeg_bin, "-y", "-i", temp_file, "-vn", "-b:a", f"{options.get('audio_quality', 320)}k", conv_file]
+                else:
+                    cmd = [ffmpeg_bin, "-y", "-i", temp_file, "-vn", "-c:a", "aac", "-b:a", "192k", conv_file]
+                res = subprocess.run(cmd, capture_output=True)
+                if res.returncode == 0 and os.path.exists(conv_file):
+                    source_file = conv_file
+        else:
+            if req_format == "mkv":
+                task["status"] = "muxing"
+                task["eta"] = "Mengemas video ke kontainer MKV..."
+                broadcast_progress(task_id, task)
+
+                mkv_file = os.path.join(temp_dir, "media.mkv")
+                cmd = [ffmpeg_bin, "-y", "-i", temp_file, "-c", "copy", mkv_file]
+                res = subprocess.run(cmd, capture_output=True)
+                if res.returncode == 0 and os.path.exists(mkv_file):
+                    source_file = mkv_file
+
+        final_dest = get_unique_filepath(out_dir, clean_title, final_ext)
+        shutil.move(source_file, final_dest)
+
+        actual_size = os.path.getsize(final_dest)
+        actual_size_mb = f"{actual_size / (1024 * 1024):.1f} MB"
+        now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+        dur_sec = tt_data.get("duration", 0)
+        dur_str = format_time(dur_sec) if dur_sec else "--"
+
+        task["status"] = "completed"
+        task["progress"] = 100.0
+        task["speed"] = "Selesai"
+        task["eta"] = "Siap Ditonton / Diedit"
+        task["filepath"] = final_dest
+        task["title"] = clean_title
+        task["total"] = actual_size_mb
+        task["downloaded"] = actual_size_mb
+        task["filesize_bytes"] = actual_size
+        task["duration"] = dur_str
+        task["duration_seconds"] = dur_sec
+        task["updated_at"] = now_str
+        task["thumbnail"] = tt_data.get("cover") or tt_data.get("origin_cover") or task.get("thumbnail")
+
+        update_history_entry(task_id, {
+            "status": "completed",
+            "filepath": final_dest,
+            "title": task["title"],
+            "thumbnail": task["thumbnail"],
+            "total": actual_size_mb,
+            "filesize_bytes": actual_size,
+            "duration": dur_str,
+            "duration_seconds": dur_sec,
+            "updated_at": now_str
+        })
+        broadcast_progress(task_id, task)
 
     def _download_hls_fallback(self, task_id: str, url: str, options: dict, out_dir: str, temp_dir: str, custom_headers: dict, cancel_ev: threading.Event):
         from curl_cffi import requests

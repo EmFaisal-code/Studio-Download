@@ -26,6 +26,42 @@ def format_bytes(size_bytes):
 def is_youtube_url(url: str) -> bool:
     return bool(re.search(r'(?:youtube\.com|youtu\.be)', url, re.IGNORECASE))
 
+def is_tiktok_url(url: str) -> bool:
+    return bool(re.search(r'(?:tiktok\.com|vt\.tiktok\.com|vm\.tiktok\.com)', url, re.IGNORECASE))
+
+def fetch_tiktok_tikwm(url: str) -> dict | None:
+    """Fetch video metadata and direct no-watermark download links from TikWM API."""
+    try:
+        import urllib.request
+        import urllib.parse
+        import json
+        clean_url = url.strip()
+        encoded_url = urllib.parse.quote(clean_url, safe='')
+        api_endpoint = f"https://www.tikwm.com/api/?url={encoded_url}&hd=1"
+        req = urllib.request.Request(
+            api_endpoint,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+                "Referer": "https://www.tikwm.com/"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=12) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            if res_data.get("code") == 0 and res_data.get("data"):
+                return res_data["data"]
+    except Exception as e:
+        try:
+            from curl_cffi import requests
+            clean_url = url.strip()
+            res = requests.get(f"https://www.tikwm.com/api/?url={clean_url}&hd=1", timeout=12, impersonate="chrome120")
+            if res.status_code == 200:
+                res_data = res.json()
+                if res_data.get("code") == 0 and res_data.get("data"):
+                    return res_data["data"]
+        except Exception:
+            pass
+    return None
+
 def clean_stream_title(raw: str) -> str:
     if not raw:
         return ""
@@ -48,6 +84,101 @@ def is_stream_url(url: str) -> bool:
     return clean.endswith(('.m3u8', '.mpd', '.ts', '.mp4')) or any(k in url.lower() for k in ('/hls/', '.m3u8', '/manifest/'))
 
 def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
+    is_yt = is_youtube_url(url)
+    is_tt = is_tiktok_url(url)
+    is_stream = is_stream_url(url)
+
+    # 1. Fast TikTok extraction via TikWM (No Watermark & Direct HD)
+    if is_tt:
+        tt_data = fetch_tiktok_tikwm(url)
+        if tt_data:
+            author_info = tt_data.get("author") or {}
+            author_id = author_info.get("unique_id") or author_info.get("nickname") or "tiktok_creator"
+            author_display = f"@{author_id}"
+
+            raw_title = tt_data.get("title") or stream_title or ""
+            display_title = clean_stream_title(raw_title) if raw_title else f"TikTok VT by {author_display}"
+
+            dur_sec = tt_data.get("duration") or 0
+            cover = tt_data.get("cover") or tt_data.get("origin_cover") or ""
+            play_count = tt_data.get("play_count")
+            views_str = f"{play_count:,}" if play_count else "N/A"
+
+            resolutions = []
+            if tt_data.get("hdplay"):
+                hd_sz = tt_data.get("hd_size") or 0
+                resolutions.append({
+                    "height": 1080,
+                    "label": "1080p Full HD (No Watermark)",
+                    "badge": "TikWM HD",
+                    "codec": "H.264 / AAC",
+                    "fps": 30,
+                    "tbr": 0,
+                    "filesize": hd_sz,
+                    "filesize_formatted": format_bytes(hd_sz) if hd_sz else "Full HD",
+                    "format_id": "tiktok_hd",
+                    "container": "mp4",
+                    "direct_url": tt_data.get("hdplay")
+                })
+
+            std_sz = tt_data.get("size") or 0
+            resolutions.append({
+                "height": 720,
+                "label": "720p HD (No Watermark)",
+                "badge": "No Watermark",
+                "codec": "H.264 / AAC",
+                "fps": 30,
+                "tbr": 0,
+                "filesize": std_sz,
+                "filesize_formatted": format_bytes(std_sz) if std_sz else "Standar (No WM)",
+                "format_id": "tiktok_standard",
+                "container": "mp4",
+                "direct_url": tt_data.get("play")
+            })
+
+            music_info = tt_data.get("music_info") or {}
+            music_title = music_info.get("title") or "Original Sound"
+
+            audio_presets = [
+                {
+                    "format": "mp3",
+                    "quality": "320",
+                    "label": f"MP3 Audio VT ({music_title[:28]})" if music_title else "MP3 Audio VT (Original Sound)",
+                    "badge": "TikWM Audio",
+                    "filesize_formatted": "Audio MP3",
+                    "direct_url": tt_data.get("music")
+                },
+                {
+                    "format": "m4a",
+                    "quality": "original",
+                    "label": "M4A (Original Sound)",
+                    "badge": "Original AAC",
+                    "filesize_formatted": "Audio M4A",
+                    "direct_url": tt_data.get("music")
+                }
+            ]
+
+            return {
+                "type": "video",
+                "id": str(tt_data.get("id") or "tiktok_video"),
+                "title": display_title,
+                "uploader": author_display,
+                "duration": format_duration(dur_sec),
+                "duration_seconds": dur_sec,
+                "views": views_str,
+                "thumbnail": cover,
+                "webpage_url": url,
+                "source_type": "tiktok",
+                "is_stream": False,
+                "resolutions": resolutions,
+                "audio_presets": audio_presets,
+                "tiktok_raw": {
+                    "play": tt_data.get("play"),
+                    "hdplay": tt_data.get("hdplay"),
+                    "music": tt_data.get("music")
+                }
+            }
+
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -68,9 +199,6 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
         ydl_opts['extractor_args'] = {'generic': {'impersonate': ['chrome']}}
     except Exception:
         pass
-
-    is_yt = is_youtube_url(url)
-    is_stream = is_stream_url(url)
 
     info = None
     try:
