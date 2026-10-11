@@ -78,30 +78,62 @@ const getStudioBaseUrl = async () => {
   return null;
 };
 
-const showNotificationToast = (tabId, title, desc, icon = "🍪") => {
+const showNotificationToast = (tabId, title, desc, tag = "INGEST_SENT", isErr = false) => {
   if (!tabId) return;
   try {
     R.scripting?.executeScript({
       target: { tabId },
-      func: (t, d, ic) => {
+      func: (t, d, tg, err) => {
         try {
           const prev = document.getElementById("sd-cookie-toast");
           if (prev) prev.remove();
           const el = document.createElement("div");
           el.id = "sd-cookie-toast";
-          el.style.cssText = "position:fixed;top:28px;right:28px;z-index:2147483647;background:#18181b;color:#facc15;border:1px solid #facc15;padding:14px 20px;border-radius:12px;font-family:Segoe UI,sans-serif;font-size:13px;font-weight:600;box-shadow:0 16px 36px rgba(0,0,0,0.7);transition:all 0.3s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;gap:12px;";
-          el.innerHTML = '<span style="font-size:24px">' + ic + '</span><div><div style="font-size:14px;color:#fef08a">' + t + '</div><div style="font-weight:400;font-size:11px;color:#a1a1aa;margin-top:2px;max-width:320px;">' + d + '</div></div>';
+          const borderColor = err ? "#f43f5e" : "#38bdf8";
+          const tagColor = err ? "#f43f5e" : "#34d399";
+          el.style.cssText = `
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 2147483647;
+            background-color: #0c0d12;
+            color: #f4f4f5;
+            border: 1px solid #27272a;
+            border-left: 3px solid ${borderColor};
+            padding: 14px 18px;
+            border-radius: 8px;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.05);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-width: 280px;
+            max-width: 420px;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(0);
+            opacity: 1;
+          `;
+          el.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:12px;">
+              <div style="display:flex;align-items:center;gap:6px;font-family:Consolas, 'JetBrains Mono', monospace;font-size:11px;font-weight:700;letter-spacing:0.5px;">
+                <span style="color:#38bdf8;">[STUDIO_DOWNLOAD]</span>
+                <span style="color:#52525b;">//</span>
+                <span style="color:${tagColor};">${tg}</span>
+              </div>
+              <span style="color:#71717a;font-family:Consolas, 'JetBrains Mono', monospace;font-size:10px;">SYS:200</span>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:#f4f4f5;line-height:1.4;margin-bottom:4px;">${t}</div>
+            <div style="font-size:11.5px;color:#a1a1aa;line-height:1.4;word-break:break-word;">${d}</div>
+          `;
           document.body.appendChild(el);
           setTimeout(() => {
             el.style.opacity = "0";
-            el.style.transform = "translateY(-10px)";
+            el.style.transform = "translateY(-8px)";
             setTimeout(() => el.remove(), 350);
-          }, 4000);
+          }, 4500);
         } catch(x) {
-          alert(t + "\n" + d);
+          console.log("[Studio Download]", t, d);
         }
       },
-      args: [title, desc, icon]
+      args: [title, desc, tag, isErr]
     }).catch(() => {});
   } catch(e) {}
 };
@@ -112,7 +144,7 @@ const syncStudioYouTubeCookies = async (tabId, isSilent = false) => {
     if (!R.cookies) {
       console.warn("[Studio Download] chrome.cookies API not available");
       if (!isSilent && tabId) {
-        showNotificationToast(tabId, "API Cookies Tidak Tersedia", "Izin cookies tidak aktif pada browser.", "⚠️");
+        showNotificationToast(tabId, "API Cookies Tidak Tersedia", "Izin cookies tidak aktif pada browser.", "WARN_API", true);
       }
       return false;
     }
@@ -170,7 +202,7 @@ const syncStudioYouTubeCookies = async (tabId, isSilent = false) => {
     console.log("[Studio Download] Found cookies count:", allCookies.length);
     if (allCookies.length === 0) {
       if (!isSilent && tabId) {
-        showNotificationToast(tabId, "Belum Ada Cookies YouTube", "Silakan buka tab YouTube dan pastikan sudah login.", "⚠️");
+        showNotificationToast(tabId, "Belum Ada Cookies YouTube", "Silakan buka tab YouTube dan pastikan sudah login.", "WARN_NO_COOKIE", true);
       }
       return false;
     }
@@ -198,7 +230,7 @@ const syncStudioYouTubeCookies = async (tabId, isSilent = false) => {
     if (!studioBase) {
       console.warn("[Studio Download] Cannot connect to Studio Download on any candidate port");
       if (!isSilent && tabId) {
-        showNotificationToast(tabId, "Studio Download Belum Berjalan", "Silakan buka software Studio Download agar cookies dapat tersimpan otomatis.", "❌");
+        showNotificationToast(tabId, "Studio Download Belum Berjalan", "Silakan buka software Studio Download agar cookies dapat tersimpan otomatis.", "ERR_OFFLINE", true);
       }
       return false;
     }
@@ -217,18 +249,18 @@ const syncStudioYouTubeCookies = async (tabId, isSilent = false) => {
       } catch(bErr) {}
 
       if (!isSilent && tabId) {
-        showNotificationToast(tabId, "Cookies YouTube Berhasil Dipasang!", `${allCookies.length} cookies berhasil disinkronkan otomatis ke Studio Download.`, "🍪");
+        showNotificationToast(tabId, "Cookies YouTube Berhasil Dipasang", `${allCookies.length} cookies berhasil disinkronkan otomatis ke Studio Download.`, "COOKIE_SYNC", false);
       }
       return true;
     } else {
       if (!isSilent && tabId) {
-        showNotificationToast(tabId, "Gagal Menyimpan Cookies", "Software merespons dengan kesalahan (status " + res.status + ").", "❌");
+        showNotificationToast(tabId, "Gagal Menyimpan Cookies", "Software merespons dengan kesalahan (status " + res.status + ").", "ERR_RESPONSE", true);
       }
     }
   } catch (err) {
     console.error("[Studio Download] Failed to sync cookies:", err);
     if (!isSilent && tabId) {
-      showNotificationToast(tabId, "Gagal Sinkronisasi Cookies", err.message || "Periksa koneksi software.", "❌");
+      showNotificationToast(tabId, "Gagal Sinkronisasi Cookies", err.message || "Periksa koneksi software.", "ERR_CONN", true);
     }
   }
   return false;
@@ -238,7 +270,7 @@ try {
   R.contextMenus?.removeAll(() => {
     R.contextMenus?.create({
       id: "sync_yt_cookies",
-      title: "🍪 Sinkronkan Cookies YouTube ke Studio Download",
+      title: "Sinkronkan Cookies YouTube ke Studio Download",
       contexts: ["action", "page"]
     }, () => { if (R.runtime.lastError) {} });
   });
@@ -314,7 +346,7 @@ const _e = async (tab) => {
         });
         const rJson = await remoteRes.json();
         if (rJson.status === "sent_to_software") {
-          showNotificationToast(activeTab.id, "Terkirim ke Studio Download!", streamTitle || "Stream Video", "⚡");
+          showNotificationToast(activeTab.id, "Terkirim ke Studio Download", streamTitle || "Stream Video", "INGEST_SENT", false);
           return;
         }
       } catch(xErr) {}
@@ -338,9 +370,10 @@ const _e = async (tab) => {
 
   showNotificationToast(
     activeTab.id,
-    "Studio Download Extension",
+    "Studio Download Companion",
     "Buka tab YouTube lalu klik ikon ini untuk menyinkronkan cookies otomatis, atau putar video streaming untuk menangkap stream.",
-    "💡"
+    "COMPANION_READY",
+    false
   );
 };
 

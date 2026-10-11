@@ -255,6 +255,7 @@ function setupEventListeners() {
 
   // Start Download
   startDownloadBtn.addEventListener('click', handleStartDownload);
+  initClipSlicerWeb();
 
   // Tasks Actions
   const clearTasksBtn = document.getElementById('clearTasksBtn');
@@ -603,6 +604,7 @@ async function analyzeVideo() {
 
 // --- Render Analysis Result ---
 function renderAnalysisResult(info) {
+  resetClipSlicerWeb();
   videoThumb.src = (info.thumbnail && (info.thumbnail.startsWith('http://') || info.thumbnail.startsWith('https://') || info.thumbnail.startsWith('data:'))) ? info.thumbnail : DEFAULT_VIDEO_FALLBACK_THUMB;
   videoThumb.onerror = () => { videoThumb.src = DEFAULT_VIDEO_FALLBACK_THUMB; };
   videoDuration.textContent = info.duration;
@@ -713,6 +715,194 @@ function renderAnalysisResult(info) {
   analysisCard.scrollIntoView({ behavior: 'smooth' });
 }
 
+// --- Multi-Clip Time Range Slicer ---
+let clipItems = [];
+
+function parseWebTimeStr(val) {
+  if (!val) return 0;
+  const s = String(val).trim().replace(/['"]/g, '');
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  const parts = s.split(':');
+  try {
+    if (parts.length === 3) {
+      return Math.max(0, parseInt(parts[0] || 0, 10) * 3600 + parseInt(parts[1] || 0, 10) * 60 + parseInt(parts[2] || 0, 10));
+    } else if (parts.length === 2) {
+      return Math.max(0, parseInt(parts[0] || 0, 10) * 60 + parseInt(parts[1] || 0, 10));
+    } else if (parts.length === 1) {
+      return Math.max(0, parseInt(parts[0] || 0, 10));
+    }
+  } catch (e) {}
+  return 0;
+}
+
+function formatWebDuration(seconds) {
+  if (!seconds || seconds <= 0) return '00:00';
+  seconds = Math.floor(seconds);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  if (h > 0) return `${h}:${p(m)}:${p(s)}`;
+  return `${p(m)}:${p(s)}`;
+}
+
+function formatWebTimeLabel(seconds) {
+  seconds = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  if (h > 0) return `${p(h)}.${p(m)}.${p(s)}`;
+  return `${p(m)}.${p(s)}`;
+}
+
+function initClipSlicerWeb() {
+  const toggle = document.getElementById('enableClipToggle');
+  const body = document.getElementById('clipBodyWrapper');
+  const badge = document.getElementById('activeClipsBadge');
+  const addBtn = document.getElementById('btnAddClipWeb');
+
+  if (!toggle) return;
+
+  toggle.addEventListener('change', () => {
+    const isChecked = toggle.checked;
+    if (body) body.style.display = isChecked ? 'block' : 'none';
+    if (badge) badge.style.display = isChecked ? 'inline-block' : 'none';
+    if (isChecked && clipItems.length === 0) {
+      const maxSec = currentVideoData ? (currentVideoData.duration_seconds || 120) : 120;
+      addClipItemWeb(0, Math.min(maxSec, 120));
+    }
+    renderClipItemsWeb();
+  });
+
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      let startSec = 0;
+      if (clipItems.length > 0) {
+        startSec = clipItems[clipItems.length - 1].end;
+      }
+      const maxSec = currentVideoData ? (currentVideoData.duration_seconds || 0) : 0;
+      let endSec = startSec + 60;
+      if (maxSec > 0) {
+        endSec = Math.min(endSec, maxSec);
+        if (startSec >= maxSec) {
+          startSec = Math.max(0, maxSec - 60);
+          endSec = maxSec;
+        }
+      }
+      addClipItemWeb(startSec, endSec);
+    });
+  }
+}
+
+function resetClipSlicerWeb() {
+  clipItems = [];
+  const toggle = document.getElementById('enableClipToggle');
+  const body = document.getElementById('clipBodyWrapper');
+  const badge = document.getElementById('activeClipsBadge');
+  if (toggle) toggle.checked = false;
+  if (body) body.style.display = 'none';
+  if (badge) badge.style.display = 'none';
+  renderClipItemsWeb();
+}
+
+function addClipItemWeb(startSec, endSec) {
+  clipItems.push({
+    start: startSec,
+    end: endSec,
+    startStr: formatWebDuration(startSec),
+    endStr: formatWebDuration(endSec),
+    label: ''
+  });
+  renderClipItemsWeb();
+}
+
+function renderClipItemsWeb() {
+  const container = document.getElementById('clipRowsList');
+  const badge = document.getElementById('activeClipsBadge');
+  const toggle = document.getElementById('enableClipToggle');
+  const btnDev = startDownloadBtn ? startDownloadBtn.querySelector('.lbl-dev') : null;
+  const btnNormal = startDownloadBtn ? startDownloadBtn.querySelector('.lbl-normal') : null;
+
+  if (badge) {
+    badge.textContent = `[KLIP: ${clipItems.length}]`;
+  }
+
+  if (toggle && toggle.checked && clipItems.length > 0) {
+    if (clipItems.length > 1) {
+      if (btnDev) btnDev.textContent = `EXECUTE_DOWNLOAD (${clipItems.length} CLIPS)`;
+      if (btnNormal) btnNormal.textContent = `Unduh ${clipItems.length} Klip Sekaligus`;
+    } else {
+      const dur = formatWebDuration(clipItems[0].end - clipItems[0].start);
+      if (btnDev) btnDev.textContent = `EXECUTE_DOWNLOAD (1 CLIP [${dur}])`;
+      if (btnNormal) btnNormal.textContent = `Unduh 1 Klip (${dur})`;
+    }
+  } else {
+    if (btnDev) btnDev.textContent = 'EXECUTE_DOWNLOAD()';
+    if (btnNormal) btnNormal.textContent = 'Mulai Unduh Media';
+  }
+
+  if (!container) return;
+  container.innerHTML = '';
+
+  clipItems.forEach((clip, idx) => {
+    const row = document.createElement('div');
+    row.className = 'clip-row mono';
+    row.style.cssText = 'display: flex; align-items: center; gap: 8px; background: #121318; border: 1px solid #27272a; border-left: 3px solid #38bdf8; border-radius: 6px; padding: 6px 10px; font-size: 11px;';
+
+    const diff = clip.end - clip.start;
+    const durLabel = diff > 0 ? `[${formatWebDuration(diff)}]` : '[! SALAH]';
+    const durColor = diff > 0 ? 'var(--syntax-constant, #fbbf24)' : 'var(--accent-danger, #f43f5e)';
+
+    row.innerHTML = `
+      <span style="color: #38bdf8; font-weight: 700; min-width: 50px;">KLIP #${idx + 1}</span>
+      <span style="color: var(--text-muted); font-size: 10px;">MULAI:</span>
+      <input type="text" class="clip-start-input mono" value="${clip.startStr}" style="width: 65px; height: 24px; text-align: center; background: #0c0d11; border: 1px solid #27272a; border-radius: 4px; color: #f4f4f5; font-size: 11px; font-weight: 700;">
+      <span style="color: var(--text-muted);">➔</span>
+      <span style="color: var(--text-muted); font-size: 10px;">SELESAI:</span>
+      <input type="text" class="clip-end-input mono" value="${clip.endStr}" style="width: 65px; height: 24px; text-align: center; background: #0c0d11; border: 1px solid #27272a; border-radius: 4px; color: #f4f4f5; font-size: 11px; font-weight: 700;">
+      <span style="color: ${durColor}; font-weight: 700; min-width: 65px;">${durLabel}</span>
+      <input type="text" class="clip-label-input mono" value="${clip.label || ''}" placeholder="// Label (opsional)..." style="flex: 1; height: 24px; background: #0c0d11; border: 1px solid #27272a; border-radius: 4px; color: #f4f4f5; font-size: 11px; padding: 0 6px;">
+      <button type="button" class="btn-action-icon btn-action-delete" title="Hapus klip" style="padding: 2px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    `;
+
+    const sInp = row.querySelector('.clip-start-input');
+    const eInp = row.querySelector('.clip-end-input');
+    const lInp = row.querySelector('.clip-label-input');
+    const dBtn = row.querySelector('.btn-action-delete');
+
+    sInp.addEventListener('change', () => {
+      clip.start = parseWebTimeStr(sInp.value);
+      clip.startStr = sInp.value.trim();
+      renderClipItemsWeb();
+    });
+
+    eInp.addEventListener('change', () => {
+      clip.end = parseWebTimeStr(eInp.value);
+      clip.endStr = eInp.value.trim();
+      renderClipItemsWeb();
+    });
+
+    lInp.addEventListener('input', () => {
+      clip.label = lInp.value.trim();
+    });
+
+    dBtn.addEventListener('click', () => {
+      if (clipItems.length <= 1) {
+        if (toggle) toggle.checked = false;
+        resetClipSlicerWeb();
+      } else {
+        clipItems.splice(idx, 1);
+        renderClipItemsWeb();
+      }
+    });
+
+    container.appendChild(row);
+  });
+}
+
 // --- Start Download ---
 async function handleStartDownload() {
   if (!currentVideoData) {
@@ -738,14 +928,18 @@ async function handleStartDownload() {
     payload.codec_preference = videoCodecSelect ? videoCodecSelect.value : 'compatible';
     payload.filesize_approx = selectedVideoFormat ? selectedVideoFormat.filesize_formatted : '';
     payload.bitrate = selectedVideoFormat ? (selectedVideoFormat.tbr ? `${Math.round(selectedVideoFormat.tbr)} kbps` : `${selectedVideoFormat.height}p`) : '';
-    if (selectedVideoFormat && selectedVideoFormat.format_id) {
-      payload.format_id = selectedVideoFormat.format_id;
+    if (selectedVideoFormat) {
+      if (selectedVideoFormat.format_id) payload.format_id = selectedVideoFormat.format_id;
+      if (selectedVideoFormat.direct_url) payload.direct_url = selectedVideoFormat.direct_url;
     }
   } else {
     payload.format = selectedAudioFormat ? selectedAudioFormat.format : 'mp3';
     payload.audio_quality = selectedAudioFormat ? selectedAudioFormat.quality : '320';
     payload.filesize_approx = selectedAudioFormat ? selectedAudioFormat.filesize_formatted : '';
     payload.bitrate = selectedAudioFormat ? `${selectedAudioFormat.quality} kbps` : '320 kbps';
+    if (selectedAudioFormat && selectedAudioFormat.direct_url) {
+      payload.direct_url = selectedAudioFormat.direct_url;
+    }
   }
 
   const refererInput = document.getElementById('streamRefererInput');
@@ -757,6 +951,27 @@ async function handleStartDownload() {
   }
   if (window._streamUA) {
     payload.user_agent = window._streamUA;
+  }
+
+  const clipToggle = document.getElementById('enableClipToggle');
+  if (clipToggle && clipToggle.checked && clipItems.length > 0) {
+    const validClips = [];
+    for (let i = 0; i < clipItems.length; i++) {
+      const c = clipItems[i];
+      if (c.end <= c.start) {
+        showToast(`Rentang klip #${i + 1} tidak valid (Waktu mulai harus lebih kecil dari selesai).`, 'error');
+        return;
+      }
+      const sTag = formatWebTimeLabel(c.start);
+      const eTag = formatWebTimeLabel(c.end);
+      const tag = c.label ? `[${c.label} ${sTag}-${eTag}]` : `[${sTag}-${eTag}]`;
+      validClips.push({
+        start: c.start,
+        end: c.end,
+        title: `${finalTitle} ${tag}`
+      });
+    }
+    payload.clips = validClips;
   }
 
   startDownloadBtn.disabled = true;
@@ -804,7 +1019,9 @@ function renderTasks() {
     const isCancelled = task.status === 'cancelled';
     const isMuxing = task.status === 'muxing';
     const isQueued = task.status === 'queued';
-    const isRunning = task.status === 'starting' || task.status === 'downloading' || isMuxing || isQueued;
+    const isPaused = task.status === 'paused';
+    const isDownloading = task.status === 'starting' || task.status === 'downloading';
+    const isRunning = isDownloading || isMuxing || isQueued;
 
     let statusText = `${task.progress}%`;
     let statusColor = 'var(--text-primary)';
@@ -814,6 +1031,10 @@ function renderTasks() {
       statusText = '<span class="lbl-dev">QUEUED</span><span class="lbl-normal">Antrean</span>';
       statusColor = 'var(--syntax-num)';
       progressFillBg = 'var(--syntax-num)';
+    } else if (isPaused) {
+      statusText = '<span class="lbl-dev">PAUSED</span><span class="lbl-normal">Dijeda</span>';
+      statusColor = 'var(--syntax-constant, #fbbf24)';
+      progressFillBg = 'var(--syntax-constant, #fbbf24)';
     } else if (isMuxing) {
       statusText = '<span class="lbl-dev">MUXING_FFMPEG</span><span class="lbl-normal">Menggabungkan Video...</span>';
       statusColor = 'var(--syntax-keyword)';
@@ -833,7 +1054,29 @@ function renderTasks() {
     }
 
     let actionButtons = '';
-    if (isRunning) {
+    if (isDownloading) {
+      actionButtons = `
+        <button class="btn-action-small mono" style="color:var(--syntax-constant, #fbbf24); border-color: rgba(251,191,36,0.3)" onclick="pauseTask('${id}')">
+          <span class="lbl-dev">PAUSE</span>
+          <span class="lbl-normal">Jeda</span>
+        </button>
+        <button class="btn-action-small mono" style="color:var(--accent-danger); border-color: rgba(244,63,94,0.3)" onclick="cancelTask('${id}')">
+          <span class="lbl-dev">ABORT</span>
+          <span class="lbl-normal">Batal</span>
+        </button>
+      `;
+    } else if (isPaused) {
+      actionButtons = `
+        <button class="btn-action-small mono" style="color:var(--accent-contrast, #38bdf8); border-color: rgba(56,189,248,0.3)" onclick="resumeTask('${id}')">
+          <span class="lbl-dev">RESUME</span>
+          <span class="lbl-normal">Lanjutkan</span>
+        </button>
+        <button class="btn-action-small mono" style="color:var(--accent-danger); border-color: rgba(244,63,94,0.3)" onclick="cancelTask('${id}')">
+          <span class="lbl-dev">ABORT</span>
+          <span class="lbl-normal">Batal</span>
+        </button>
+      `;
+    } else if (isMuxing || isQueued) {
       actionButtons = `
         <button class="btn-action-small mono" style="color:var(--accent-danger); border-color: rgba(244,63,94,0.3)" onclick="cancelTask('${id}')">
           <span class="lbl-dev">ABORT</span>
@@ -902,6 +1145,32 @@ function renderTasks() {
 
     tasksList.appendChild(taskEl);
   });
+}
+
+async function pauseTask(taskId) {
+  try {
+    await fetch(`/api/tasks/${taskId}/pause`, { method: 'POST' });
+    if (activeTasksMap[taskId]) {
+      activeTasksMap[taskId].status = 'paused';
+      renderTasks();
+    }
+    showToast('Unduhan dijeda.', 'info');
+  } catch (err) {
+    showToast('Gagal menjeda unduhan.', 'error');
+  }
+}
+
+async function resumeTask(taskId) {
+  try {
+    await fetch(`/api/tasks/${taskId}/resume`, { method: 'POST' });
+    if (activeTasksMap[taskId]) {
+      activeTasksMap[taskId].status = 'downloading';
+      renderTasks();
+    }
+    showToast('Melanjutkan unduhan...', 'info');
+  } catch (err) {
+    showToast('Gagal melanjutkan unduhan.', 'error');
+  }
 }
 
 async function cancelTask(taskId) {
@@ -1095,6 +1364,13 @@ function renderHistory() {
       <img class="history-thumb" src="${thumb}" alt="" onerror="this.onerror=null;this.src='/static/thumb-placeholder.svg';">
       <div class="history-details mono">
         <div class="history-title" title="${item.title}">${item.title}</div>
+        ${item.url ? `
+          <div class="history-url-row" style="margin: 3px 0;">
+            <a href="javascript:void(0)" onclick="redownloadFromHistory('${encodeURIComponent(item.url)}')" style="color: #38bdf8; font-size: 11px; text-decoration: underline; word-break: break-all;" title="Klik untuk mengunduh ulang tautan ini">
+              🔗 ${item.url}
+            </a>
+          </div>
+        ` : ''}
         <div class="history-meta">
           <span class="history-meta-tag">${item.resolution || 'MEDIA'} • ${(item.format || '').toUpperCase()}${bitrateDisplay}${durDisplay}</span>
           <span><span class="lbl-dev">//</span><span class="lbl-normal">•</span></span>
@@ -1104,6 +1380,13 @@ function renderHistory() {
         </div>
       </div>
       <div class="history-actions mono">
+        ${item.url ? `
+          <button class="btn-action-small" onclick="redownloadFromHistory('${encodeURIComponent(item.url)}')" title="Unduh ulang tautan ini">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            <span class="lbl-dev">REDOWNLOAD</span>
+            <span class="lbl-normal">Unduh Lagi</span>
+          </button>
+        ` : ''}
         ${item.filepath ? `
           <button class="btn-action-small" onclick="openFile('${encodeURIComponent(item.filepath)}')">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -1127,6 +1410,19 @@ function renderHistory() {
 
     historyList.appendChild(el);
   });
+}
+
+function redownloadFromHistory(encodedUrl) {
+  const url = decodeURIComponent(encodedUrl);
+  if (!url) return;
+  const urlInput = document.getElementById('urlInput');
+  if (urlInput) {
+    urlInput.value = url;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof handleAnalyze === 'function') {
+      handleAnalyze();
+    }
+  }
 }
 
 // --- Download History ---

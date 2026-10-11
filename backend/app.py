@@ -89,6 +89,9 @@ class DownloadRequest(BaseModel):
     format_id: Optional[str] = None
     cookie: Optional[str] = None
     user_agent: Optional[str] = None
+    section_start: Optional[float] = None
+    section_end: Optional[float] = None
+    clips: Optional[list] = None
 
 class SettingsRequest(BaseModel):
     download_dir: Optional[str] = None
@@ -145,6 +148,19 @@ async def api_remote_stream(req: RemoteStreamRequest):
     except Exception:
         pass
 
+    # Notify native desktop Qt app if active
+    try:
+        from backend.ipc_bridge import extension_bridge
+        extension_bridge.remote_stream_received.emit({
+            "url": req.url,
+            "title": req.title,
+            "referer": req.referer,
+            "cookie": req.cookie,
+            "user_agent": req.user_agent
+        })
+    except Exception:
+        pass
+
     # Broadcast to all connected Studio Download windows (including desktop software window)
     if ws_clients and loop:
         payload = json.dumps({
@@ -160,9 +176,8 @@ async def api_remote_stream(req: RemoteStreamRequest):
                 asyncio.run_coroutine_threadsafe(ws.send_text(payload), loop)
             except Exception:
                 pass
-        return {"status": "sent_to_software", "clients_count": len(ws_clients)}
 
-    return {"status": "no_clients"}
+    return {"status": "sent_to_software", "clients_count": len(ws_clients)}
 
 @app.post("/api/parse")
 async def api_parse(req: ParseRequest):
@@ -190,8 +205,22 @@ async def api_download(req: DownloadRequest):
         raise HTTPException(status_code=400, detail="URL tidak boleh kosong.")
     try:
         options = req.model_dump()
-        task_id = download_manager.start_download(req.url.strip(), options)
-        return {"status": "started", "task_id": task_id}
+        if req.clips and len(req.clips) > 0:
+            task_ids = []
+            for c in req.clips:
+                clip_opts = options.copy()
+                clip_opts.pop("clips", None)
+                clip_opts["full_duration_seconds"] = options.get("duration_seconds", 0)
+                clip_opts["section_start"] = c.get("start")
+                clip_opts["section_end"] = c.get("end")
+                if c.get("title"):
+                    clip_opts["title"] = c["title"]
+                tid = download_manager.start_download(req.url.strip(), clip_opts)
+                task_ids.append(tid)
+            return {"status": "started", "task_ids": task_ids, "task_id": task_ids[0]}
+        else:
+            task_id = download_manager.start_download(req.url.strip(), options)
+            return {"status": "started", "task_id": task_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -203,6 +232,20 @@ async def api_get_tasks():
 async def api_cancel_task(task_id: str):
     download_manager.cancel_download(task_id)
     return {"status": "cancelled"}
+
+@app.post("/api/tasks/{task_id}/pause")
+async def api_pause_task(task_id: str):
+    success = download_manager.pause_download(task_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Tidak dapat menjeda tugas unduhan.")
+    return {"status": "paused"}
+
+@app.post("/api/tasks/{task_id}/resume")
+async def api_resume_task(task_id: str):
+    success = download_manager.resume_download(task_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Tidak dapat melanjutkan tugas unduhan.")
+    return {"status": "resumed"}
 
 @app.delete("/api/tasks/{task_id}")
 async def api_dismiss_task(task_id: str):
@@ -262,11 +305,23 @@ async def api_cookies_paste(req: CookiePasteRequest):
     target_path = BASE_DIR / "cookies.txt"
     with open(target_path, "w", encoding="utf-8") as f:
         f.write(content)
+    try:
+        app_cookie = get_app_dir() / "cookies.txt"
+        if app_cookie != target_path:
+            with open(app_cookie, "w", encoding="utf-8") as f:
+                f.write(content)
+    except Exception:
+        pass
     # Automatically update settings to use this file
     save_settings({
         "cookie_source": "file",
         "cookie_file": str(target_path)
     })
+    try:
+        from backend.ipc_bridge import extension_bridge
+        extension_bridge.cookies_updated.emit(str(target_path))
+    except Exception:
+        pass
     return {
         "status": "saved",
         "path": str(target_path),

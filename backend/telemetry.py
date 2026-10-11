@@ -56,7 +56,12 @@ def sync_user_to_cloud(profile: dict) -> dict:
             }).encode("utf-8")
             patch_req = urllib.request.Request(patch_url, data=payload, headers=_get_headers(), method="PATCH")
             with urllib.request.urlopen(patch_req, timeout=6) as patch_resp:
-                return {"status": "updated", "is_banned": is_banned}
+                try:
+                    resp_data = json.loads(patch_resp.read().decode("utf-8"))
+                    cloud_id = resp_data[0].get("id") if (resp_data and isinstance(resp_data, list)) else user_id
+                except Exception:
+                    cloud_id = user_id
+                return {"status": "updated", "is_banned": is_banned, "id": cloud_id}
         else:
             # 2. Insert new user record
             payload = json.dumps({
@@ -71,10 +76,31 @@ def sync_user_to_cloud(profile: dict) -> dict:
             }).encode("utf-8")
             post_req = urllib.request.Request(SUPABASE_URL, data=payload, headers=_get_headers(), method="POST")
             with urllib.request.urlopen(post_req, timeout=6) as post_resp:
-                return {"status": "created", "is_banned": False}
+                try:
+                    resp_data = json.loads(post_resp.read().decode("utf-8"))
+                    cloud_id = resp_data[0].get("id") if (resp_data and isinstance(resp_data, list)) else None
+                except Exception:
+                    cloud_id = None
+                return {"status": "created", "is_banned": False, "id": cloud_id}
     except Exception as e:
         logger.debug(f"[Telemetry] Cloud sync skipped: {e}")
         return {"status": "error", "error": str(e)}
+
+def fetch_cloud_users(timeout: int = 6) -> list[dict]:
+    """
+    Fetch the list of registered users directly from Supabase studio_users cloud table.
+    Returns list of dict with id, username, role, contact, last_seen, created_at, etc.
+    """
+    url = f"{SUPABASE_URL}?select=*&order=created_at.desc"
+    try:
+        req = urllib.request.Request(url, headers=_get_headers(), method="GET")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data if isinstance(data, list) else []
+    except Exception as e:
+        logger.debug(f"[Telemetry] fetch_cloud_users failed: {e}")
+    return []
 
 def fetch_cloud_config() -> dict:
     """

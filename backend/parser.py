@@ -14,20 +14,241 @@ def format_duration(seconds):
         return f"{hours}:{minutes:02d}:{secs:02d}"
     return f"{minutes:02d}:{secs:02d}"
 
+def format_duration_hms(seconds) -> str:
+    """Guaranteed 3-part HH:MM:SS format (e.g. 00:00:00, 01:25:30, 04:27:00)."""
+    if not seconds:
+        return "00:00:00"
+    seconds = max(0, int(seconds))
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+def parse_time_str(val) -> int:
+    """Parses timestamp strings (HH:MM:SS, MM:SS, or seconds) into integer seconds."""
+    if val is None:
+        return 0
+    if isinstance(val, (int, float)):
+        return max(0, int(val))
+    s = str(val).strip().strip("'\"")
+    if not s:
+        return 0
+    if s.isdigit():
+        return int(s)
+    parts = s.split(":")
+    try:
+        if len(parts) == 3:
+            h, m, sec = parts
+            return max(0, int(h) * 3600 + int(m) * 60 + int(float(sec)))
+        elif len(parts) == 2:
+            m, sec = parts
+            return max(0, int(m) * 60 + int(float(sec)))
+        elif len(parts) == 1:
+            return max(0, int(float(parts[0])))
+    except Exception:
+        pass
+    return 0
+
+def format_time_label(seconds: int) -> str:
+    """Formats seconds into filename-safe notation: MM.SS or HH.MM.SS."""
+    seconds = max(0, int(seconds))
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    s = seconds % 60
+    if h > 0:
+        return f"{h:02d}.{m:02d}.{s:02d}"
+    return f"{m:02d}.{s:02d}"
+
 def format_bytes(size_bytes):
     if not size_bytes or size_bytes <= 0:
         return "Estimasi N/A"
     size_name = ("B", "KB", "MB", "GB", "TB")
     i = int(math.floor(math.log(size_bytes, 1024)))
+    i = min(i, len(size_name) - 1)
     p = math.pow(1024, i)
-    s = round(size_bytes / p, 1)
-    return f"{s} {size_name[i]}"
+    s = size_bytes / p
+    if i >= 3:  # GB or TB
+        return f"{s:.2f} {size_name[i]}"
+    elif i >= 1:  # KB or MB
+        return f"{s:.1f} {size_name[i]}"
+    else:
+        return f"{int(s)} B"
+
+def get_prores_bitrate_mbps(height: int, fps: int = 30) -> int:
+    fps_mult = (fps / 30.0) if fps and fps > 0 else 1.0
+    if height >= 4320:
+        base = 1884
+    elif height >= 2160:
+        base = 471
+    elif height >= 1440:
+        base = 208
+    elif height >= 1080:
+        base = 117
+    elif height >= 720:
+        base = 59
+    elif height >= 480:
+        base = 27
+    elif height >= 360:
+        base = 15
+    elif height >= 240:
+        base = 8
+    else:
+        base = 4
+    return int(base * fps_mult)
 
 def is_youtube_url(url: str) -> bool:
     return bool(re.search(r'(?:youtube\.com|youtu\.be)', url, re.IGNORECASE))
 
+def normalize_youtube_url(url: str) -> str:
+    """
+    Normalizes YouTube URLs containing query parameters (like &list=, &index=, ?si=, &t=)
+    to a canonical single-video URL (https://www.youtube.com/watch?v=VIDEO_ID)
+    whenever a specific video ID is present.
+    Preserves pure playlist URLs (e.g. /playlist?list=...) that have no video ID.
+    """
+    if not url:
+        return ""
+    clean = url.strip()
+    try:
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(clean)
+        netloc = parsed.netloc.lower()
+        if any(h in netloc for h in ("youtube.com", "youtu.be", "youtube-nocookie.com")):
+            # 1. Shortened link: youtu.be/<video_id>
+            if "youtu.be" in netloc:
+                video_id = parsed.path.strip("/").split("/")[0]
+                if video_id and len(video_id) == 11:
+                    return f"https://www.youtube.com/watch?v={video_id}"
+
+            # 2. Path-based video IDs: /shorts/<id>, /live/<id>, /embed/<id>, /v/<id>
+            path_parts = [p for p in parsed.path.strip("/").split("/") if p]
+            if len(path_parts) >= 2 and path_parts[0] in ("shorts", "live", "embed", "v"):
+                video_id = path_parts[1]
+                if video_id and len(video_id) == 11:
+                    return f"https://www.youtube.com/watch?v={video_id}"
+
+            # 3. Query-based video IDs: watch?v=<id> or any path with ?v=<id>
+            qs = parse_qs(parsed.query)
+            if "v" in qs and qs["v"]:
+                video_id = qs["v"][0]
+                if video_id and len(video_id) == 11:
+                    return f"https://www.youtube.com/watch?v={video_id}"
+    except Exception:
+        pass
+    return clean
+
+
 def is_tiktok_url(url: str) -> bool:
     return bool(re.search(r'(?:tiktok\.com|vt\.tiktok\.com|vm\.tiktok\.com)', url, re.IGNORECASE))
+
+def resolve_tiktok_url(url: str) -> str:
+    """Resolve shortened TikTok links like vt.tiktok.com or vm.tiktok.com to canonical URL."""
+    clean = url.strip()
+    if any(k in clean.lower() for k in ('vt.tiktok.com', 'vm.tiktok.com', '/t/')):
+        try:
+            import urllib.request
+            req = urllib.request.Request(clean, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+            })
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                return resp.geturl()
+        except Exception:
+            pass
+    return clean
+
+def fetch_tiktok_original_task(url: str, max_retries: int = 4, delay: float = 1.2) -> dict | None:
+    """
+    Submits an HD/Original download task to TikWM Original Downloader API
+    (as used in 1.1.1 handleHDProcess), which provides the true uncompressed
+    original video (_original.mp4) without watermark and with full original filesize.
+    """
+    import urllib.request
+    import urllib.parse
+    import json
+    import time
+
+    clean_url = resolve_tiktok_url(url)
+    try:
+        post_data = urllib.parse.urlencode({'url': clean_url, 'web': '1'}).encode('utf-8')
+        req = urllib.request.Request(
+            'https://www.tikwm.com/api/video/task/submit',
+            data=post_data,
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Referer': 'https://www.tikwm.com/originalDownloader.html',
+                'Origin': 'https://www.tikwm.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+            }
+        )
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            s_data = json.loads(resp.read().decode('utf-8'))
+            if s_data.get('code') != 0 or not s_data.get('data', {}).get('task_id'):
+                return None
+            task_id = s_data['data']['task_id']
+
+        for _ in range(max_retries):
+            time.sleep(delay)
+            r_req = urllib.request.Request(
+                f'https://www.tikwm.com/api/video/task/result?task_id={task_id}',
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.tikwm.com/originalDownloader.html'
+                }
+            )
+            with urllib.request.urlopen(r_req, timeout=10) as r_resp:
+                r_data = json.loads(r_resp.read().decode('utf-8'))
+                if r_data.get('code') == 0 and r_data.get('data'):
+                    detail = r_data['data'].get('detail') or r_data['data']
+                    play_url = detail.get('play_url') or detail.get('download_url') or detail.get('play')
+                    if play_url:
+                        return {
+                            'play_url': play_url,
+                            'download_url': detail.get('download_url') or play_url,
+                            'size': int(detail.get('size') or 0),
+                            'task_id': task_id
+                        }
+    except Exception:
+        try:
+            from curl_cffi import requests
+            res = requests.post(
+                'https://www.tikwm.com/api/video/task/submit',
+                data={'url': clean_url, 'web': '1'},
+                headers={
+                    'Referer': 'https://www.tikwm.com/originalDownloader.html',
+                    'Origin': 'https://www.tikwm.com',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                timeout=12,
+                impersonate='chrome120'
+            )
+            if res.status_code == 200:
+                s_json = res.json()
+                task_id = s_json.get('data', {}).get('task_id')
+                if task_id:
+                    for _ in range(max_retries):
+                        time.sleep(delay)
+                        r_res = requests.get(
+                            f'https://www.tikwm.com/api/video/task/result?task_id={task_id}',
+                            headers={'Referer': 'https://www.tikwm.com/originalDownloader.html'},
+                            timeout=10,
+                            impersonate='chrome120'
+                        )
+                        if r_res.status_code == 200:
+                            r_json = r_res.json()
+                            detail = r_json.get('data', {}).get('detail') or r_json.get('data', {})
+                            play_url = detail.get('play_url') or detail.get('download_url')
+                            if play_url:
+                                return {
+                                    'play_url': play_url,
+                                    'download_url': detail.get('download_url') or play_url,
+                                    'size': int(detail.get('size') or 0),
+                                    'task_id': task_id
+                                }
+        except Exception:
+            pass
+
+    return None
 
 def fetch_tiktok_tikwm(url: str) -> dict | None:
     """Fetch video metadata and direct no-watermark download links from TikWM API."""
@@ -35,7 +256,7 @@ def fetch_tiktok_tikwm(url: str) -> dict | None:
         import urllib.request
         import urllib.parse
         import json
-        clean_url = url.strip()
+        clean_url = resolve_tiktok_url(url)
         encoded_url = urllib.parse.quote(clean_url, safe='')
         api_endpoint = f"https://www.tikwm.com/api/?url={encoded_url}&hd=1"
         req = urllib.request.Request(
@@ -52,7 +273,7 @@ def fetch_tiktok_tikwm(url: str) -> dict | None:
     except Exception as e:
         try:
             from curl_cffi import requests
-            clean_url = url.strip()
+            clean_url = resolve_tiktok_url(url)
             res = requests.get(f"https://www.tikwm.com/api/?url={clean_url}&hd=1", timeout=12, impersonate="chrome120")
             if res.status_code == 200:
                 res_data = res.json()
@@ -84,13 +305,29 @@ def is_stream_url(url: str) -> bool:
     return clean.endswith(('.m3u8', '.mpd', '.ts', '.mp4')) or any(k in url.lower() for k in ('/hls/', '.m3u8', '/manifest/'))
 
 def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
+    url = normalize_youtube_url(url)
     is_yt = is_youtube_url(url)
     is_tt = is_tiktok_url(url)
     is_stream = is_stream_url(url)
 
-    # 1. Fast TikTok extraction via TikWM (No Watermark & Direct HD)
+    # 1. Fast TikTok extraction via TikWM (No Watermark & Direct HD Original)
     if is_tt:
-        tt_data = fetch_tiktok_tikwm(url)
+        canonical_url = resolve_tiktok_url(url)
+        import concurrent.futures
+        tt_data = None
+        task_res = None
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            future_tt = executor.submit(fetch_tiktok_tikwm, canonical_url)
+            future_task = executor.submit(fetch_tiktok_original_task, canonical_url)
+            try:
+                tt_data = future_tt.result(timeout=10)
+            except Exception:
+                tt_data = None
+            try:
+                task_res = future_task.result(timeout=4)
+            except Exception:
+                task_res = None
+
         if tt_data:
             author_info = tt_data.get("author") or {}
             author_id = author_info.get("unique_id") or author_info.get("nickname") or "tiktok_creator"
@@ -104,14 +341,36 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             play_count = tt_data.get("play_count")
             views_str = f"{play_count:,}" if play_count else "N/A"
 
+            std_sz = int(tt_data.get("size") or 0)
+            hd_sz = int(tt_data.get("hd_size") or 0)
+            orig_sz = int(task_res.get("size") or 0) if task_res else 0
+            best_orig_sz = orig_sz if orig_sz > 0 else max(std_sz, hd_sz)
+
             resolutions = []
+
+            # 1. Kualitas Asli / Source HD (File Size Asli)
+            # Default pre-selected di index #0
+            resolutions.append({
+                "height": 1080,
+                "label": "Kualitas Asli (Source)",
+                "badge": "Original Size",
+                "codec": "H.264 / AAC",
+                "fps": 30,
+                "tbr": 0,
+                "filesize": best_orig_sz,
+                "filesize_formatted": format_bytes(best_orig_sz) if best_orig_sz else "File Size Asli",
+                "format_id": "tiktok_original",
+                "container": "mp4",
+                "direct_url": task_res.get("play_url") if task_res else None
+            })
+
+            # 2. HD Transcode (jika ada hdplay)
             if tt_data.get("hdplay"):
-                hd_sz = tt_data.get("hd_size") or 0
                 resolutions.append({
-                    "height": 1080,
-                    "label": "1080p Full HD (No Watermark)",
+                    "height": 1080 if hd_sz >= std_sz else 720,
+                    "label": "1080p HD (TikWM Transcode)",
                     "badge": "TikWM HD",
-                    "codec": "H.264 / AAC",
+                    "codec": "H.264 / H.265",
                     "fps": 30,
                     "tbr": 0,
                     "filesize": hd_sz,
@@ -121,10 +380,10 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
                     "direct_url": tt_data.get("hdplay")
                 })
 
-            std_sz = tt_data.get("size") or 0
+            # 3. Standar No Watermark
             resolutions.append({
                 "height": 720,
-                "label": "720p HD (No Watermark)",
+                "label": "720p Standar (No Watermark)",
                 "badge": "No Watermark",
                 "codec": "H.264 / AAC",
                 "fps": 30,
@@ -167,7 +426,7 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
                 "duration_seconds": dur_sec,
                 "views": views_str,
                 "thumbnail": cover,
-                "webpage_url": url,
+                "webpage_url": canonical_url,
                 "source_type": "tiktok",
                 "is_stream": False,
                 "resolutions": resolutions,
@@ -175,13 +434,16 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
                 "tiktok_raw": {
                     "play": tt_data.get("play"),
                     "hdplay": tt_data.get("hdplay"),
-                    "music": tt_data.get("music")
+                    "music": tt_data.get("music"),
+                    "original_url": task_res.get("play_url") if task_res else None,
+                    "original_size": best_orig_sz
                 }
             }
 
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
+        'noplaylist': True,
         'extract_flat': 'in_playlist',
         'skip_download': True,
     }
@@ -206,8 +468,8 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             info = ydl.extract_info(url, download=False)
     except Exception as e:
         raw_err = str(e)
-        # Fallback: if impersonate / curl_cffi hits curl 77 (bad CA) or TransportError, retry cleanly without impersonate
-        if any(term in raw_err.lower() for term in ("curl: (77)", "transporterror", "trust anchors", "cafile")) and 'impersonate' in ydl_opts:
+        # Fallback: if impersonate / curl_cffi hits any curl error (28 timeout, 77 bad CA, etc.) or TransportError, retry cleanly without impersonate
+        if any(term in raw_err.lower() for term in ("curl:", "curl ", "transporterror", "trust anchors", "cafile", "timed out", "timeout")) and 'impersonate' in ydl_opts:
             retry_opts = ydl_opts.copy()
             retry_opts.pop('impersonate', None)
             retry_opts.pop('extractor_args', None)
@@ -355,12 +617,16 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
     # Standard YouTube video heights to keep (ignore storyboards, weird crops)
     allowed_heights = {4320, 2160, 1440, 1080, 720, 480, 360, 240, 144}
 
-    # Group video formats by height
-    video_resolutions = {}
+    # Group video formats by height and codec family (h264, vp9, av1)
+    formats_by_height_and_codec = {}
+    resolution_meta = {}
+
     for f in formats:
         h = f.get("height")
         vcodec = f.get("vcodec") or ""
         ext = f.get("ext") or ""
+        protocol = f.get("protocol") or ""
+        format_id_str = str(f.get("format_id") or "")
 
         # Filter out storyboards (mhtml, none vcodec, or height not standard or < 144)
         if ext == "mhtml":
@@ -373,6 +639,10 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             # Audio-only stream on generic site, handled in audio presets
             continue
 
+        # Filter out YouTube internal HLS manifests (m3u8) & 600-series chunk manifests with inflated burst bitrates
+        if is_yt and (protocol.startswith("m3u8") or format_id_str.startswith("6")):
+            continue
+
         # For non-YT streams without explicit height, assign an estimated height or fallback
         fmt_key = h if h else (f.get("tbr") or f.get("format_id") or 720)
         display_h = h if h else 720
@@ -382,73 +652,187 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
 
         # Calculate accurate filesize
         fs = f.get("filesize") or f.get("filesize_approx") or 0
+        has_real_size = bool(fs)
         if not fs and tbr and duration_sec:
-            fs = int((tbr * 1000 / 8) * duration_sec)
+            # Sanity clamp for estimated bitrate to prevent inflated estimates from HLS burst rates
+            max_bitrates = {
+                144: 350, 240: 600, 360: 1200, 480: 2500,
+                720: 6000, 1080: 12000, 1440: 25000, 2160: 60000, 4320: 120000
+            }
+            clamped_tbr = min(tbr, max_bitrates.get(display_h, 25000))
+            fs = int((clamped_tbr * 1000 / 8) * duration_sec)
 
         total_filesize = fs
         if f.get("acodec") == "none" and best_audio_size:
             total_filesize += best_audio_size
 
-        # Badge text
-        if display_h >= 4320:
-            badge = "8K Ultra HD"
-        elif display_h >= 2160:
-            badge = "4K Ultra HD"
-        elif display_h >= 1440:
-            badge = "2K QHD"
-        elif display_h >= 1080:
-            badge = "1080p Full HD"
-        elif display_h >= 720:
-            badge = "720p HD"
-        elif display_h >= 480:
-            badge = f"{display_h}p SD"
-        elif h:
-            badge = f"{display_h}p"
-        else:
-            badge = "Direct Stream"
-
-        if fps and fps >= 50:
-            badge += f" {int(fps)}fps"
-
-        # Codec friendly name
-        codec_name = "H.264"
         if "av01" in vcodec or "av1" in vcodec:
-            codec_name = "AV1"
+            cfam = "av1"
+            cname = "AV1"
         elif "vp09" in vcodec or "vp9" in vcodec:
-            codec_name = "VP9"
-        elif "hls" in (f.get("protocol") or ""):
-            codec_name = "HLS Stream"
+            cfam = "vp9"
+            cname = "VP9"
+        else:
+            cfam = "h264"
+            cname = "H.264"
 
-        # Prioritize VP9/H.264 over AV1 for default representation, or pick highest bitrate
-        is_av1 = "av01" in vcodec
-        current_res = video_resolutions.get(fmt_key)
+        if fmt_key not in formats_by_height_and_codec:
+            formats_by_height_and_codec[fmt_key] = {}
+            if display_h >= 4320:
+                badge = "8K Ultra HD"
+            elif display_h >= 2160:
+                badge = "4K Ultra HD"
+            elif display_h >= 1440:
+                badge = "2K QHD"
+            elif display_h >= 1080:
+                badge = "1080p Full HD"
+            elif display_h >= 720:
+                badge = "720p HD"
+            elif display_h >= 480:
+                badge = f"{display_h}p SD"
+            elif h:
+                badge = f"{display_h}p"
+            else:
+                badge = "Direct Stream"
 
+            resolution_meta[fmt_key] = {
+                "height": display_h,
+                "label": f"{display_h}p" if h else (f.get("format_note") or "Original"),
+                "badge": badge
+            }
+
+        curr_stream = formats_by_height_and_codec[fmt_key].get(cfam)
         should_replace = False
-        if not current_res:
+        if not curr_stream:
             should_replace = True
         else:
-            curr_is_av1 = "AV1" in current_res["codec"]
-            # Prefer non-AV1 (VP9/H.264) for compatibility
-            if curr_is_av1 and not is_av1:
+            if not curr_stream["has_real_size"] and has_real_size:
                 should_replace = True
-            elif not curr_is_av1 and is_av1:
+            elif curr_stream["has_real_size"] and not has_real_size:
                 should_replace = False
-            elif tbr > current_res["tbr"]:
+            elif fps > curr_stream["fps"]:
+                should_replace = True
+            elif fps == curr_stream["fps"] and tbr > curr_stream["tbr"]:
                 should_replace = True
 
         if should_replace:
-            video_resolutions[fmt_key] = {
-                "height": display_h,
-                "label": f"{display_h}p" if h else (f.get("format_note") or "Original"),
-                "badge": badge,
-                "codec": codec_name,
+            formats_by_height_and_codec[fmt_key][cfam] = {
+                "format_id": f.get("format_id"),
+                "codec": cname,
                 "fps": fps,
                 "tbr": tbr,
-                "filesize": total_filesize,
-                "filesize_formatted": format_bytes(total_filesize) if total_filesize else "Stream HLS",
-                "format_id": f.get("format_id"),
+                "has_real_size": has_real_size,
+                "total_filesize": total_filesize,
                 "container": "mp4"
             }
+
+    video_resolutions = {}
+    for fmt_key, stream_dict in formats_by_height_and_codec.items():
+        meta = resolution_meta[fmt_key]
+        display_h = meta["height"]
+
+        h264_st = stream_dict.get("h264")
+        vp9_st = stream_dict.get("vp9")
+        av1_st = stream_dict.get("av1")
+
+        best_overall = h264_st or vp9_st or av1_st or next(iter(stream_dict.values()))
+
+        codecs_dict = {}
+
+        # 1. Compatible (H.264 preference)
+        if h264_st:
+            codecs_dict["compatible"] = {
+                "codec": "H.264",
+                "format_id": h264_st["format_id"],
+                "filesize": h264_st["total_filesize"],
+                "filesize_formatted": format_bytes(h264_st["total_filesize"]),
+                "fps": h264_st["fps"],
+                "is_native": True
+            }
+        elif vp9_st:
+            est_sz = int(vp9_st["total_filesize"] * 1.05)
+            codecs_dict["compatible"] = {
+                "codec": "H.264 (Transcode)",
+                "format_id": vp9_st["format_id"],
+                "filesize": est_sz,
+                "filesize_formatted": format_bytes(est_sz),
+                "fps": vp9_st["fps"],
+                "is_native": False
+            }
+        else:
+            codecs_dict["compatible"] = {
+                "codec": "H.264",
+                "format_id": best_overall["format_id"],
+                "filesize": best_overall["total_filesize"],
+                "filesize_formatted": format_bytes(best_overall["total_filesize"]),
+                "fps": best_overall["fps"],
+                "is_native": True
+            }
+
+        # 2. Original / Source (AV1 preferred for modern bandwidth efficiency, then VP9, then H.264)
+        if av1_st:
+            codecs_dict["original"] = {
+                "codec": "AV1",
+                "format_id": av1_st["format_id"],
+                "filesize": av1_st["total_filesize"],
+                "filesize_formatted": format_bytes(av1_st["total_filesize"]),
+                "fps": av1_st["fps"],
+                "is_native": True
+            }
+        elif vp9_st:
+            codecs_dict["original"] = {
+                "codec": "VP9",
+                "format_id": vp9_st["format_id"],
+                "filesize": vp9_st["total_filesize"],
+                "filesize_formatted": format_bytes(vp9_st["total_filesize"]),
+                "fps": vp9_st["fps"],
+                "is_native": True
+            }
+        else:
+            codecs_dict["original"] = {
+                "codec": codecs_dict["compatible"]["codec"],
+                "format_id": codecs_dict["compatible"]["format_id"],
+                "filesize": codecs_dict["compatible"]["filesize"],
+                "filesize_formatted": codecs_dict["compatible"]["filesize_formatted"],
+                "fps": codecs_dict["compatible"]["fps"],
+                "is_native": True
+            }
+
+        # 3. ProRes 422 (Source stream download size that will be transcoded)
+        prores_src_stream = vp9_st or h264_st or av1_st or best_overall
+        prores_fps = prores_src_stream.get("fps", 30)
+        prores_dl_bytes = prores_src_stream["total_filesize"]
+        prores_src_fid = prores_src_stream["format_id"]
+
+        codecs_dict["prores"] = {
+            "codec": "ProRes 422",
+            "format_id": prores_src_fid,
+            "filesize": prores_dl_bytes,
+            "filesize_formatted": format_bytes(prores_dl_bytes),
+            "fps": prores_fps,
+            "is_transcode": True
+        }
+
+        # Default representation uses "compatible"
+        def_var = codecs_dict["compatible"]
+        badge_text = meta["badge"]
+        if def_var["fps"] and def_var["fps"] >= 50:
+            badge_text += f" {int(def_var['fps'])}fps"
+
+        video_resolutions[fmt_key] = {
+            "height": display_h,
+            "label": meta["label"],
+            "badge": badge_text,
+            "codec": def_var["codec"],
+            "fps": def_var["fps"],
+            "tbr": best_overall.get("tbr", 0),
+            "has_real_size": best_overall.get("has_real_size", False),
+            "filesize": def_var["filesize"],
+            "filesize_formatted": def_var["filesize_formatted"],
+            "format_id": def_var["format_id"],
+            "container": "mp4",
+            "codecs": codecs_dict
+        }
 
     # Sort resolutions descending
     sorted_resolutions = sorted(video_resolutions.values(), key=lambda x: x["height"], reverse=True)
@@ -463,10 +847,17 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             "codec": "H.264 / AAC",
             "fps": 30,
             "tbr": 0,
+            "is_av1": False,
+            "has_real_size": bool(raw_fs),
             "filesize": raw_fs,
             "filesize_formatted": format_bytes(raw_fs) if raw_fs else "Stream Direct",
             "format_id": "best",
-            "container": "mp4"
+            "container": "mp4",
+            "codecs": {
+                "compatible": {"codec": "H.264", "format_id": "best", "filesize": raw_fs, "filesize_formatted": format_bytes(raw_fs) if raw_fs else "Stream Direct", "fps": 30},
+                "original": {"codec": "Original", "format_id": "best", "filesize": raw_fs, "filesize_formatted": format_bytes(raw_fs) if raw_fs else "Stream Direct", "fps": 30},
+                "prores": {"codec": "ProRes 422", "format_id": "best", "filesize": raw_fs, "filesize_formatted": format_bytes(raw_fs) if raw_fs else "Stream Direct", "fps": 30, "is_transcode": True}
+            }
         }]
 
     # Audio presets with accurate duration-based filesize
@@ -480,6 +871,7 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             "quality": "320",
             "label": "MP3 (320 kbps High Quality)",
             "badge": "Studio Audio",
+            "filesize": est_mp3_320,
             "filesize_formatted": format_bytes(est_mp3_320)
         },
         {
@@ -487,6 +879,7 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             "quality": "192",
             "label": "MP3 (192 kbps Standard)",
             "badge": "Standard Audio",
+            "filesize": est_mp3_192,
             "filesize_formatted": format_bytes(est_mp3_192)
         },
         {
@@ -494,15 +887,32 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
             "quality": "original",
             "label": "M4A (Original AAC 44.1kHz)",
             "badge": "Lossless Container",
+            "filesize": est_m4a,
             "filesize_formatted": format_bytes(est_m4a)
         }
     ]
 
-    # Best thumbnail
-    thumbnails = info.get("thumbnails", [])
-    best_thumbnail = info.get("thumbnail") or ""
-    if thumbnails:
-        best_thumbnail = thumbnails[-1].get("url", best_thumbnail)
+    # Robust thumbnail candidates with fallback chain
+    candidate_thumbnails = []
+    raw_thumb = (info.get("thumbnail") or "").strip()
+    v_id = (info.get("id") or "").strip()
+
+    if is_yt and v_id:
+        if raw_thumb and raw_thumb not in candidate_thumbnails:
+            candidate_thumbnails.append(raw_thumb)
+        candidate_thumbnails.append(f"https://i.ytimg.com/vi/{v_id}/maxresdefault.jpg")
+        candidate_thumbnails.append(f"https://i.ytimg.com/vi/{v_id}/hqdefault.jpg")
+        candidate_thumbnails.append(f"https://i.ytimg.com/vi/{v_id}/mqdefault.jpg")
+        candidate_thumbnails.append(f"https://i.ytimg.com/vi/{v_id}/default.jpg")
+    else:
+        if raw_thumb:
+            candidate_thumbnails.append(raw_thumb)
+        for t_item in reversed(info.get("thumbnails") or []):
+            t_url = t_item.get("url")
+            if t_url and t_url not in candidate_thumbnails:
+                candidate_thumbnails.append(t_url)
+
+    best_thumbnail = candidate_thumbnails[0] if candidate_thumbnails else raw_thumb
 
     # Determine uploader display
     uploader_name = info.get("uploader") or info.get("extractor_key") or info.get("extractor")
@@ -531,9 +941,150 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
         "duration_seconds": duration_sec,
         "views": f"{info.get('view_count', 0):,}" if info.get('view_count') else "N/A",
         "thumbnail": best_thumbnail,
+        "thumbnail_candidates": candidate_thumbnails,
         "webpage_url": info.get("webpage_url", url),
         "source_type": "youtube" if is_yt else ("hls" if is_stream else "web"),
         "is_stream": not is_yt,
         "resolutions": sorted_resolutions,
         "audio_presets": audio_presets
     }
+
+
+def extract_video_id(url: str) -> str:
+    """Extract 11-char YouTube video ID from URL if present."""
+    if not url or not isinstance(url, str):
+        return ""
+    try:
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(url.strip())
+        netloc = parsed.netloc.lower()
+        if "youtu.be" in netloc:
+            parts = parsed.path.strip("/").split("/")
+            if parts and len(parts[0]) == 11:
+                return parts[0]
+        qs = parse_qs(parsed.query)
+        if "v" in qs and qs["v"] and len(qs["v"][0]) == 11:
+            return qs["v"][0]
+        path_parts = [p for p in parsed.path.strip("/").split("/") if p]
+        if len(path_parts) >= 2 and path_parts[0] in ("shorts", "live", "embed", "v") and len(path_parts[1]) == 11:
+            return path_parts[1]
+    except Exception:
+        pass
+    return ""
+
+
+def is_pure_playlist_url(url: str) -> bool:
+    """Returns True if the URL points strictly to a playlist collection without an individual video ID."""
+    if not url or not isinstance(url, str):
+        return False
+    try:
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(url.strip())
+        netloc = parsed.netloc.lower()
+        path = parsed.path.lower()
+        qs = parse_qs(parsed.query)
+
+        if any(h in netloc for h in ("youtube.com", "youtu.be")):
+            has_vid = bool(extract_video_id(url))
+            has_list = "list" in qs
+            if has_list and not has_vid:
+                return True
+            if "playlist" in path and not has_vid:
+                return True
+            return False
+
+        if "soundcloud.com" in netloc and "/sets/" in path:
+            return True
+        if "/collection/" in path or "/series/" in path:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def is_video_in_playlist_url(url: str) -> bool:
+    """Returns True if the URL points to a specific video that is embedded inside a playlist queue."""
+    if not url or not isinstance(url, str):
+        return False
+    try:
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(url.strip())
+        netloc = parsed.netloc.lower()
+        qs = parse_qs(parsed.query)
+
+        if any(h in netloc for h in ("youtube.com", "youtu.be")):
+            has_vid = bool(extract_video_id(url))
+            has_list = "list" in qs
+            return bool(has_vid and has_list)
+    except Exception:
+        pass
+    return False
+
+
+def is_playlist_url(url: str) -> bool:
+    """Returns True if the URL points to a playlist, series, or collection (pure or video-in-playlist)."""
+    return is_pure_playlist_url(url) or is_video_in_playlist_url(url)
+
+
+def parse_playlist(url: str, custom_headers: dict = None, max_items: int = 150) -> dict:
+    """Quickly extracts playlist metadata and item list without downloading manifests."""
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'noplaylist': False,
+        'extract_flat': 'in_playlist',
+        'skip_download': True,
+        'playlistend': max_items,
+    }
+    opts.update(get_ydl_cookie_opts())
+    if custom_headers:
+        opts['http_headers'] = custom_headers
+
+    try:
+        from yt_dlp.networking.impersonate import ImpersonateTarget
+        opts['impersonate'] = ImpersonateTarget.from_str('chrome')
+        opts['extractor_args'] = {'generic': {'impersonate': ['chrome']}}
+    except Exception:
+        pass
+
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+    if not info:
+        raise ValueError("Failed to extract playlist metadata from URL.")
+
+    entries_raw = list(info.get("entries") or [])
+    clean_entries = []
+    for item in entries_raw:
+        if not item:
+            continue
+        item_id = item.get("id")
+        item_url = item.get("url") or item.get("webpage_url")
+        if item_url and not item_url.startswith("http"):
+            item_url = f"https://www.youtube.com/watch?v={item_url}"
+        elif not item_url and item_id:
+            item_url = f"https://www.youtube.com/watch?v={item_id}"
+
+        duration_sec = item.get("duration") or 0
+        thumbs = item.get("thumbnails") or []
+        thumb_url = thumbs[-1].get("url") if thumbs else (item.get("thumbnail") or "")
+
+        clean_entries.append({
+            "id": item_id,
+            "title": item.get("title") or "Untitled Media",
+            "url": item_url,
+            "duration": format_duration(duration_sec) if duration_sec else "--:--",
+            "duration_seconds": duration_sec,
+            "uploader": item.get("uploader") or item.get("channel") or "",
+            "thumbnail": thumb_url
+        })
+
+    return {
+        "type": "playlist",
+        "id": info.get("id"),
+        "title": info.get("title") or "Playlist",
+        "uploader": info.get("uploader") or info.get("channel") or "Various Creators",
+        "count": len(clean_entries),
+        "entries": clean_entries
+    }
+

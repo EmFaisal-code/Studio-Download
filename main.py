@@ -18,6 +18,10 @@ BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
 import uvicorn
+try:
+    import main_qt
+except Exception:
+    pass
 from backend.config import get_settings, get_app_dir, get_bundle_dir
 
 def get_icon_path() -> str | None:
@@ -107,6 +111,15 @@ def run_server(port: int):
             pass
 
 def main():
+    # If not explicitly asked to run in web mode, launch 100% native PySide6 desktop GUI
+    if "--web" not in sys.argv:
+        try:
+            from main_qt import main as qt_main
+            qt_main()
+            return
+        except ImportError as e:
+            print(f"[*] PySide6 tidak tersedia ({e}), beralih ke mode web...")
+
     app_dir = get_app_dir()
     os.environ["PATH"] = str(app_dir) + os.pathsep + os.environ.get("PATH", "")
 

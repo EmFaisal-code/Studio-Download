@@ -68,6 +68,11 @@
           <span class="lbl-normal" id="userBadgeNormal">Pengguna</span>
         </button>
 
+        <a class="nav-btn btn-donate" id="donateNavBtn" href="https://sociabuzz.com/emef/tribe" target="_blank" rel="noopener noreferrer" title="Dukung pengembang Studio Download via Sociabuzz" style="text-decoration: none; color: #f472b6; border-color: #831843; background: #1c1318; display: inline-flex; align-items: center; gap: 5px;">
+          <span class="lbl-dev mono">DONATE</span>
+          <span class="lbl-normal">Donate</span>
+        </a>
+
         <button class="nav-btn" id="langToggleBtn" data-i18n-title="nav_lang_title" title="Ganti Bahasa (ID / EN)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -340,6 +345,30 @@
           </div>
           <div class="format-grid" id="audioGrid">
             <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Multi-Clip / Time Range Slicer Container -->
+        <div class="clip-deck mono" id="clipDeckContainer" style="margin-top: 14px; background: rgba(14,15,19,0.85); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 11px; font-weight: 700; color: var(--text-primary);">
+              <input type="checkbox" id="enableClipToggle" style="accent-color: var(--accent-contrast, #38bdf8); width: 15px; height: 15px; cursor: pointer;">
+              <span class="lbl-dev">// TIME_RANGE_SLICER (MULTI-CLIP)</span>
+              <span class="lbl-normal">Potong Durasi / Multi-Klip</span>
+            </label>
+            <span id="activeClipsBadge" class="task-badge" style="display: none; background: #0e1926; border: 1px solid #1a3556; color: #38bdf8; font-size: 10px; padding: 2px 8px; border-radius: 4px;">[KLIP: 1]</span>
+          </div>
+
+          <div id="clipBodyWrapper" style="display: none; margin-top: 10px;">
+            <p style="color: var(--text-muted); font-size: 10px; margin: 0 0 8px 0;">
+              // Tentukan satu atau beberapa rentang durasi. Setiap rentang akan dipotong & diunduh sebagai berkas klip terpisah:
+            </p>
+            <div id="clipRowsList" style="display: flex; flex-direction: column; gap: 6px;">
+              <!-- Populated by JS -->
+            </div>
+            <button type="button" class="btn btn-secondary btn-small mono" id="btnAddClipWeb" style="margin-top: 8px; color: #38bdf8; border-color: rgba(56,189,248,0.4); border-style: dashed; padding: 4px 10px; font-size: 11px;">
+              + Tambah Rentang Klip
+            </button>
           </div>
         </div>
 
@@ -896,6 +925,10 @@
           </div>
 
           <div class="modal-footer settings-footer-dock">
+            <a class="btn btn-secondary mono" id="donateSettingsBtn" href="https://sociabuzz.com/emef/tribe" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #f472b6; border-color: #831843; background: #1c1318; margin-right: auto; display: inline-flex; align-items: center; gap: 5px;">
+              <span class="lbl-dev">DONATE</span>
+              <span class="lbl-normal">Dukung via Sociabuzz</span>
+            </a>
             <button class="btn btn-secondary mono" id="cancelSettingsBtn" type="button">
               <span class="lbl-dev">CANCEL</span>
               <span class="lbl-normal" data-i18n="cancel_settings_btn">Batal</span>

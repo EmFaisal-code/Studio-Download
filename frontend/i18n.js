@@ -336,7 +336,7 @@ const i18nData = {
 
 class I18nManager {
   constructor() {
-    this.currentLang = localStorage.getItem('studio_download_lang') || 'id';
+    this.currentLang = localStorage.getItem('studio_download_lang') || 'en';
   }
 
   init() {
@@ -364,14 +364,14 @@ class I18nManager {
   }
 
   t(key, fallback = '') {
-    const langDict = i18nData[this.currentLang] || i18nData['id'];
+    const langDict = i18nData[this.currentLang] || i18nData['en'];
     return langDict[key] || fallback || key;
   }
 
   applyLanguage(lang) {
     this.currentLang = lang;
     localStorage.setItem('studio_download_lang', lang);
-    const dict = i18nData[lang] || i18nData['id'];
+    const dict = i18nData[lang] || i18nData['en'];
 
     // 1. Text content / innerHTML via data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {

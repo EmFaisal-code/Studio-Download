@@ -26,8 +26,25 @@ def build():
 
     # 2. Prepare PyInstaller command
     frontend_dir = BASE_DIR / "frontend"
+    ui_dir = BASE_DIR / "ui"
+    backend_dir = BASE_DIR / "backend"
     
     hidden_imports = [
+        "main_qt",
+        "PySide6",
+        "PySide6.QtCore",
+        "PySide6.QtGui",
+        "PySide6.QtWidgets",
+        "ui",
+        "ui.styles",
+        "ui.main_window",
+        "ui.components.title_bar",
+        "ui.components.format_cards",
+        "ui.components.task_item",
+        "ui.dialogs.settings_dialog",
+        "ui.dialogs.history_dialog",
+        "ui.dialogs.profile_dialog",
+        "ui.dialogs.who_are_you_dialog",
         "uvicorn",
         "uvicorn.logging",
         "uvicorn.loops",
@@ -55,7 +72,8 @@ def build():
         "backend.downloader",
         "backend.history",
         "backend.parser",
-        "backend.telemetry"
+        "backend.telemetry",
+        "backend.i18n"
     ]
 
     cmd = [
@@ -68,7 +86,10 @@ def build():
         "--noconfirm",
         f"--icon={BASE_DIR / 'app_icon.ico'}",
         f"--add-data={frontend_dir};frontend",
+        f"--add-data={ui_dir};ui",
+        f"--add-data={backend_dir};backend",
         f"--add-data={BASE_DIR / 'app_icon.ico'};.",
+        "--collect-all=PySide6",
         "--collect-all=certifi",
         "--collect-all=curl_cffi",
     ]
@@ -87,10 +108,19 @@ def build():
     dist_dir = BASE_DIR / "dist" / "StudioDownload"
     print(f"\n[+] Build selesai di: {dist_dir}")
 
-    # Copy app_icon.ico to portable root directory
+    # Copy app_icon.ico & app_icon.png to portable root directory
     if (BASE_DIR / "app_icon.ico").exists():
         print("[*] Menyalin app_icon.ico ke direktori portable...")
         shutil.copy2(BASE_DIR / "app_icon.ico", dist_dir / "app_icon.ico")
+    if (BASE_DIR / "app_icon.png").exists():
+        print("[*] Menyalin app_icon.png ke direktori portable...")
+        shutil.copy2(BASE_DIR / "app_icon.png", dist_dir / "app_icon.png")
+
+    # Clean sensitive files from dist
+    for sensitive_file in ["cookies.txt", "history.json", "users.json", "server_error.log"]:
+        sf = dist_dir / sensitive_file
+        if sf.exists():
+            sf.unlink()
 
     # Ensure SSL cacert.pem is present in _internal/certifi and root
     try:

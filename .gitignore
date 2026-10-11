@@ -7,6 +7,10 @@ __pycache__/
 build/
 dist/
 *.spec
+*.zip
+StudioDownload-v1.0-Portable/
+StudioDownload-v1.0-Portable.zip
+
 
 # User local data & sensitive information
 cookies.txt

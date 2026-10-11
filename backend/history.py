@@ -90,3 +90,7 @@ def clear_all_history(delete_files: bool = False):
                     print(f"Error removing physical file {fp}: {e}")
     save_history([])
     return {"status": "cleared", "deleted_files_count": deleted_count}
+
+# Aliases for convenience
+clear_history = clear_all_history
+delete_history_item = delete_history_entry
