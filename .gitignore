@@ -18,6 +18,7 @@ history.json
 settings.json
 users.json
 server_error.log
+*.log
 
 # Temporary test & scratch folders
 .test_temp/

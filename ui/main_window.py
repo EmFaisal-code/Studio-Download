@@ -37,6 +37,7 @@ from ui.dialogs.history_dialog import HistoryDialog
 from ui.dialogs.user_dialog import WhoAreYouDialog
 from ui.dialogs.profile_dialog import UserProfileDialog
 from ui.dialogs.playlist_dialog import PlaylistDialog, PlaylistPromptDialog
+from ui.dialogs.trimmer_dialog import VisualTrimmerDialog
 
 
 
@@ -511,6 +512,9 @@ class MainWindow(QMainWindow):
         self.lbl_thumb.setStyleSheet("background-color: #121318; border-radius: 8px; border: 1px solid #27272a; color: #52525b; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;")
         self.lbl_thumb.setAlignment(Qt.AlignCenter)
         self.lbl_thumb.setText(t("thumbnail_loading"))
+        self.lbl_thumb.setCursor(Qt.PointingHandCursor)
+        self.lbl_thumb.setToolTip("Klik untuk Buka Trim Video")
+        self.lbl_thumb.mousePressEvent = lambda e: self._open_visual_trimmer()
         top_h.addWidget(self.lbl_thumb, 0, Qt.AlignTop)
 
         # Info details
@@ -544,7 +548,9 @@ class MainWindow(QMainWindow):
         self.lbl_views = QLabel(f"{t('meta_views')} --", self.result_box)
         self.lbl_views.setStyleSheet("color: #34d399; background: #0e1e17; border: 1px solid #1a3d2e; border-radius: 4px; padding: 3px 8px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600;")
         meta_h.addWidget(self.lbl_views)
+
         meta_h.addStretch()
+
         info_v.addLayout(meta_h)
 
         # Mode Selector (Segmented Pill Switcher with compact fixed width)
@@ -598,6 +604,7 @@ class MainWindow(QMainWindow):
         self.clip_selector = ClipSelectorWidget(self.result_box)
         self.clip_selector.clips_changed.connect(self._on_clips_changed)
         self.clip_selector.toggled.connect(self._on_clips_toggled)
+        self.clip_selector.open_trimmer_requested.connect(self._open_visual_trimmer)
         res_layout.addWidget(self.clip_selector)
 
         # Bottom Part: Container format & Download Button
@@ -735,7 +742,9 @@ class MainWindow(QMainWindow):
         uploader = data.get("uploader", "Unknown")
         if uploader and not uploader.startswith("@"):
             uploader = f"@{uploader}"
-        self.lbl_uploader.setText(f"{t('meta_creator')} {uploader}")
+        disp_uploader = uploader if len(uploader) <= 28 else (uploader[:25] + "...")
+        self.lbl_uploader.setText(f"{t('meta_creator')} {disp_uploader}")
+        self.lbl_uploader.setToolTip(uploader)
         self.lbl_duration.setText(f"{t('meta_duration')} {data.get('duration', '--')}")
         self.lbl_views.setText(f"{t('meta_views')} {data.get('views', '--')}")
 
@@ -762,6 +771,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "clip_selector"):
             self.clip_selector.reset()
             self.clip_selector.set_max_duration(duration_sec, duration_str)
+            self.clip_selector.set_size_estimator(self._estimate_clip_size_str)
 
         self._set_mode("video")
         self._update_start_download_button_text()
@@ -862,6 +872,25 @@ class MainWindow(QMainWindow):
 
     def _on_clips_toggled(self, enabled: bool):
         self._update_start_download_button_text()
+
+    def _open_visual_trimmer(self):
+        if not self.current_parse_data:
+            return
+        existing_clips = self.clip_selector.get_clips()
+        estimator = getattr(self, "_estimate_clip_size_str", None)
+        dialog = VisualTrimmerDialog(
+            self.current_parse_data,
+            existing_clips=existing_clips,
+            size_estimator=estimator,
+            parent=self
+        )
+        dialog.clips_applied.connect(self._on_trimmer_clips_applied)
+        dialog.exec()
+
+    def _on_trimmer_clips_applied(self, clips: list):
+        if hasattr(self, "clip_selector"):
+            self.clip_selector.set_clips(clips)
+            self._update_start_download_button_text()
 
     def _estimate_clip_size_str(self, duration_sec: int) -> str:
         if not hasattr(self, "selected_format") or not self.selected_format or duration_sec <= 0:
@@ -1181,6 +1210,7 @@ class MainWindow(QMainWindow):
         card.retry_clicked.connect(self._retry_task)
         card.delete_clicked.connect(self._delete_task)
         card.config_clicked.connect(self._open_settings_dialog)
+        card.check_disk_clicked.connect(self._on_check_disk_clicked)
 
         self.tasks_container.insertWidget(0, card)
         self.task_widgets[task_id] = card
@@ -1226,6 +1256,13 @@ class MainWindow(QMainWindow):
 
     def _resume_task(self, task_id: str):
         download_manager.resume_download(task_id)
+
+    def _on_check_disk_clicked(self, task_id: str):
+        success, msg = download_manager.recheck_disk_and_resume(task_id)
+        if not success and task_id in self.task_widgets:
+            card = self.task_widgets[task_id]
+            card.lbl_eta.setText(msg[:60])
+            card.lbl_eta.setToolTip(msg)
 
     def _cancel_task(self, task_id: str):
         confirm = QMessageBox.question(
@@ -1432,13 +1469,17 @@ class MainWindow(QMainWindow):
             uploader = self.current_parse_data.get("uploader", "Unknown")
             if uploader and not uploader.startswith("@"):
                 uploader = f"@{uploader}"
+            disp_uploader = uploader if len(uploader) <= 28 else (uploader[:25] + "...")
             if hasattr(self, "lbl_uploader"):
-                self.lbl_uploader.setText(f"{t('meta_creator')} {uploader}")
+                self.lbl_uploader.setText(f"{t('meta_creator')} {disp_uploader}")
+                self.lbl_uploader.setToolTip(uploader)
             if hasattr(self, "lbl_duration"):
                 self.lbl_duration.setText(f"{t('meta_duration')} {self.current_parse_data.get('duration', '--')}")
             if hasattr(self, "lbl_views"):
                 self.lbl_views.setText(f"{t('meta_views')} {self.current_parse_data.get('views', '--')}")
             self._render_format_cards()
+        if hasattr(self, "clip_selector"):
+            self.clip_selector.retranslate_ui()
 
     def _init_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)

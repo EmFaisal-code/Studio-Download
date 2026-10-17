@@ -429,6 +429,11 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
                 "webpage_url": canonical_url,
                 "source_type": "tiktok",
                 "is_stream": False,
+                "preview_url": (task_res.get("play_url") if task_res else None) or tt_data.get("play") or tt_data.get("hdplay") or "",
+                "preview_options": [
+                    {"height": 1080, "label": "1080p HD (Original Source)", "url": task_res.get("play_url") if task_res else (tt_data.get("hdplay") or tt_data.get("play")), "format_id": "tiktok_orig"},
+                    {"height": 720, "label": "720p Standar (Smooth Scrubbing)", "url": tt_data.get("play") or (tt_data.get("hdplay")), "format_id": "tiktok_std"}
+                ],
                 "resolutions": resolutions,
                 "audio_presets": audio_presets,
                 "tiktok_raw": {
@@ -520,6 +525,8 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
                 "webpage_url": url,
                 "source_type": "hls",
                 "is_stream": True,
+                "preview_url": url,
+                "preview_options": [{"height": 1080, "label": "Stream Asli (Direct)", "url": url, "format_id": "hls"}],
                 "resolutions": [
                     {
                         "height": 1080,
@@ -932,6 +939,76 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
     else:
         display_title = clean_stream_title(raw_title) if not is_raw_dummy else (clean_stream_title(stream_title) or "Video")
 
+    # Find progressive & direct streams for preview across full spectrum:
+    # 4320p (8K), 2160p (4K), 1440p (2K), 1080p (FHD), 720p (HD), 480p (SD), 360p (Fast Scrub), 240p (Low), 144p (Min)
+    preview_stream_url = ""
+    preview_options = []
+    seen_heights = set()
+
+    # Collect all playable video formats with direct URLs
+    video_direct = [
+        f for f in formats 
+        if f.get("url") and f.get("vcodec") != "none" and f.get("height")
+    ]
+
+    # Target standard heights plus any existing distinct heights
+    standard_heights = [4320, 2160, 1440, 1080, 720, 480, 360, 240, 144]
+    found_heights = set(f.get("height") for f in video_direct if f.get("height"))
+    all_target_heights = sorted(list(set(standard_heights) | found_heights), reverse=True)
+
+    tag_map = {
+        4320: "8K",
+        2160: "4K",
+        1440: "2K",
+        1080: "FHD",
+        720: "HD",
+        480: "SD",
+        360: "Fast Scrub",
+        240: "Low",
+        144: "Min"
+    }
+
+    for target_h in all_target_heights:
+        matches = [f for f in video_direct if f.get("height") == target_h and f.get("url")]
+        if matches:
+            # Prioritize: 1. Audio present (progressive) 2. MP4 container 3. AVC/H.264 4. Higher bitrate
+            def _format_priority(fmt):
+                has_audio = 1 if fmt.get("acodec") != "none" else 0
+                is_mp4 = 1 if fmt.get("ext") == "mp4" else 0
+                vc = (fmt.get("vcodec") or "").lower()
+                is_h264 = 1 if ("avc" in vc or "h264" in vc) else 0
+                bitrate = fmt.get("tbr") or fmt.get("vbr") or 0
+                return (has_audio, is_mp4, is_h264, bitrate)
+
+            matches.sort(key=_format_priority, reverse=True)
+            best_fmt = matches[0]
+
+            tag = tag_map.get(target_h, "")
+            label = f"{target_h}p ({tag})" if tag else f"{target_h}p"
+            preview_options.append({
+                "height": target_h,
+                "label": label,
+                "url": best_fmt.get("url"),
+                "format_id": best_fmt.get("format_id"),
+                "has_audio": best_fmt.get("acodec") != "none"
+            })
+            seen_heights.add(target_h)
+
+    # Sort descending by height (Max to 144p Low)
+    preview_options.sort(key=lambda x: (x.get("height") or 0), reverse=True)
+
+    # Determine default stream: 360p (Fast Scrub) or format 18 for instant bufferless scrubbing
+    p360 = [p for p in preview_options if p["height"] == 360]
+    p480 = [p for p in preview_options if p["height"] == 480]
+    if p360:
+        preview_stream_url = p360[0]["url"]
+    elif p480:
+        preview_stream_url = p480[0]["url"]
+    elif preview_options:
+        preview_stream_url = preview_options[0].get("url") or ""
+    else:
+        preview_stream_url = info.get("url") or ""
+
     return {
         "type": "video",
         "id": info.get("id"),
@@ -945,8 +1022,11 @@ def parse_url(url: str, custom_headers: dict = None, stream_title: str = None):
         "webpage_url": info.get("webpage_url", url),
         "source_type": "youtube" if is_yt else ("hls" if is_stream else "web"),
         "is_stream": not is_yt,
+        "preview_url": preview_stream_url,
+        "preview_options": preview_options,
         "resolutions": sorted_resolutions,
-        "audio_presets": audio_presets
+        "audio_presets": audio_presets,
+        "raw_formats": formats
     }
 
 

@@ -1,10 +1,53 @@
 import os
 import subprocess
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtWidgets import (
-    QWidget, QFrame, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton
+    QWidget, QFrame, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QSizePolicy
 )
 from backend.i18n import t
+
+class ElidedLabel(QLabel):
+    """
+    A QLabel that elides overflowing text with an ellipsis (...) instead of
+    expanding its minimumSizeHint width to the full string width, preventing
+    parent layouts and scroll areas from horizontally stretching or clipping.
+    """
+    def __init__(self, text: str = "", parent=None):
+        super().__init__(parent)
+        self._full_text = text or ""
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        if self._full_text:
+            self.setToolTip(self._full_text)
+
+    def set_full_text(self, text: str, update_tooltip: bool = True):
+        self._full_text = text or ""
+        if update_tooltip:
+            self.setToolTip(self._full_text)
+        self._update_elided()
+
+    def setText(self, text: str):
+        self.set_full_text(text)
+
+    def text(self) -> str:
+        return self._full_text
+
+    def minimumSizeHint(self) -> QSize:
+        sh = super().minimumSizeHint()
+        return QSize(50, sh.height() if sh.height() > 0 else 18)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_elided()
+
+    def _update_elided(self):
+        if not self._full_text:
+            super().setText("")
+            return
+        w = max(10, self.width() - 4)
+        fm = self.fontMetrics()
+        elided = fm.elidedText(self._full_text, Qt.ElideRight, w)
+        if super().text() != elided:
+            super().setText(elided)
 
 class TaskItemWidget(QFrame):
     pause_clicked = Signal(str)
@@ -15,6 +58,7 @@ class TaskItemWidget(QFrame):
     open_file_clicked = Signal(str)
     delete_clicked = Signal(str)
     config_clicked = Signal()
+    check_disk_clicked = Signal(str)
 
     def __init__(self, task_data: dict, parent=None):
         super().__init__(parent)
@@ -136,9 +180,9 @@ class TaskItemWidget(QFrame):
         # Top row: Title + Status Badge
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
-        self.lbl_title = QLabel(self)
+        top_row.setSpacing(10)
+        self.lbl_title = ElidedLabel(self.task_data.get("title", t("task_default_title")), self)
         self.lbl_title.setObjectName("taskTitle")
-        self.lbl_title.setText(self.task_data.get("title", t("task_default_title")))
         top_row.addWidget(self.lbl_title, 1, Qt.AlignVCenter)
 
         self.lbl_badge = QLabel(self)
@@ -162,14 +206,14 @@ class TaskItemWidget(QFrame):
         bottom_row.setContentsMargins(0, 0, 0, 0)
         bottom_row.setSpacing(12)
 
-        self.lbl_stats = QLabel(self)
+        self.lbl_stats = ElidedLabel("", self)
         self.lbl_stats.setObjectName("taskStats")
-        self.lbl_stats.setMinimumWidth(260)
-        bottom_row.addWidget(self.lbl_stats, 0, Qt.AlignVCenter)
+        self.lbl_stats.setMinimumWidth(120)
+        bottom_row.addWidget(self.lbl_stats, 1, Qt.AlignVCenter)
 
         self.lbl_eta = QLabel(self)
         self.lbl_eta.setObjectName("taskEta")
-        self.lbl_eta.setMinimumWidth(90)
+        self.lbl_eta.setMinimumWidth(60)
         bottom_row.addWidget(self.lbl_eta, 0, Qt.AlignVCenter)
 
         bottom_row.addStretch()
@@ -226,6 +270,8 @@ class TaskItemWidget(QFrame):
 
     def update_data(self, data: dict):
         self.task_data = data
+        if "title" in data and data["title"]:
+            self.lbl_title.set_full_text(data["title"])
         status = data.get("status", "starting")
         progress = float(data.get("progress", 0))
         speed = data.get("speed", "--")
@@ -291,13 +337,43 @@ class TaskItemWidget(QFrame):
                 self.lbl_stats.setToolTip("")
                 self.lbl_eta.setText("")
         elif status == "paused":
-            self.lbl_badge.setText(f"[STATUS:{t('status_paused')} {progress:.1f}%]")
-            self.lbl_badge.setStyleSheet("background-color: #16171d; border: 1px solid #fbbf24; color: #fbbf24; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; font-family: 'JetBrains Mono', monospace;")
-            self.lbl_stats.setText(f"[{downloaded} / {total}]  |  Paused")
-            self.lbl_stats.setToolTip("")
-            self.lbl_eta.setText(t("task_paused_desc"))
-            self._set_progress_bar_color("#fbbf24")
-            self._set_card_border("#fbbf24")
+            if data.get("disk_low"):
+                self.lbl_badge.setText(f"[STATUS:{t('status_low_disk')}]")
+                self.lbl_badge.setStyleSheet(
+                    "background-color: rgba(244, 63, 94, 0.15); "
+                    "border: 1px solid #f43f5e; "
+                    "color: #fb7185; "
+                    "border-radius: 4px; "
+                    "padding: 2px 8px; "
+                    "font-weight: 700; "
+                    "font-size: 10px; "
+                    "font-family: 'JetBrains Mono', monospace;"
+                )
+                disk_f = data.get("disk_free", "--")
+                disk_n = data.get("disk_needed", "--")
+                dr = data.get("disk_drive", "Disk")
+                dr_label = dr.rstrip(":")
+                self.lbl_stats.setText(f"[{dr_label}: Sisa {disk_f} / Butuh {disk_n}]")
+                self.lbl_stats.setToolTip(
+                    f"Peringatan Ruang Penyimpanan:\n"
+                    f"Lokasi: {dr}\n"
+                    f"Ruang Kosong: {disk_f}\n"
+                    f"Dibutuhkan: {disk_n}\n\n"
+                    f"Status: Konversi dijeda otomatis untuk mencegah file korup.\n"
+                    f"Sistem memantau secara real-time dan akan melanjutkan otomatis setelah ruang disk kosong,\n"
+                    f"atau tekan tombol [CEK DISK] untuk memeriksa ulang secara manual."
+                )
+                self.lbl_eta.setText(t("task_low_disk_desc"))
+                self._set_progress_bar_color("#f43f5e")
+                self._set_card_border("#f43f5e")
+            else:
+                self.lbl_badge.setText(f"[STATUS:{t('status_paused')} {progress:.1f}%]")
+                self.lbl_badge.setStyleSheet("background-color: #16171d; border: 1px solid #fbbf24; color: #fbbf24; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; font-family: 'JetBrains Mono', monospace;")
+                self.lbl_stats.setText(f"[{downloaded} / {total}]  |  Paused")
+                self.lbl_stats.setToolTip("")
+                self.lbl_eta.setText(t("task_paused_desc"))
+                self._set_progress_bar_color("#fbbf24")
+                self._set_card_border("#fbbf24")
         elif status == "completed":
             self.lbl_badge.setText(f"[STATUS:{t('status_completed')}]")
             self.lbl_badge.setStyleSheet("background-color: #16171d; border: 1px solid #34d399; color: #34d399; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; font-family: 'JetBrains Mono', monospace;")
@@ -340,9 +416,11 @@ class TaskItemWidget(QFrame):
             self._set_progress_bar_color("#818cf8")
             self._set_card_border("#818cf8")
 
-        if status != self._current_status:
+        is_low_disk = bool(data.get("disk_low"))
+        if status != self._current_status or is_low_disk != getattr(self, "_last_is_low_disk", None):
             self._refresh_buttons(status, data)
             self._current_status = status
+            self._last_is_low_disk = is_low_disk
 
     def _refresh_buttons(self, status: str, data: dict):
         while self.actions_layout.count():
@@ -366,18 +444,44 @@ class TaskItemWidget(QFrame):
             btn_cancel.clicked.connect(lambda: self.cancel_clicked.emit(self.task_id))
             self.actions_layout.addWidget(btn_cancel)
         elif status == "paused":
-            btn_resume = QPushButton(t("task_btn_resume"), self)
-            btn_resume.setProperty("class", "cardResumeBtn")
-            btn_resume.setFixedHeight(26)
-            btn_resume.clicked.connect(lambda: self.resume_clicked.emit(self.task_id))
-            self.actions_layout.addWidget(btn_resume)
+            if data.get("disk_low"):
+                btn_check = QPushButton(t("task_btn_check_disk"), self)
+                btn_check.setProperty("class", "cardResumeBtn")
+                btn_check.setFixedHeight(26)
+                btn_check.setToolTip("Periksa ketersediaan ruang disk dan lanjutkan konversi jika sudah cukup")
+                btn_check.clicked.connect(lambda: self.check_disk_clicked.emit(self.task_id))
+                self.actions_layout.addWidget(btn_check)
 
-            btn_cancel = QPushButton(t("task_btn_abort"), self)
-            btn_cancel.setProperty("class", "cardCancelBtn")
-            btn_cancel.setFixedHeight(26)
-            btn_cancel.clicked.connect(lambda: self.cancel_clicked.emit(self.task_id))
-            self.actions_layout.addWidget(btn_cancel)
+                btn_cfg = QPushButton(t("task_btn_storage"), self)
+                btn_cfg.setProperty("class", "cardActionBtn")
+                btn_cfg.setFixedHeight(26)
+                btn_cfg.clicked.connect(self.config_clicked.emit)
+                self.actions_layout.addWidget(btn_cfg)
+
+                btn_cancel = QPushButton(t("task_btn_abort"), self)
+                btn_cancel.setProperty("class", "cardCancelBtn")
+                btn_cancel.setFixedHeight(26)
+                btn_cancel.clicked.connect(lambda: self.cancel_clicked.emit(self.task_id))
+                self.actions_layout.addWidget(btn_cancel)
+            else:
+                btn_resume = QPushButton(t("task_btn_resume"), self)
+                btn_resume.setProperty("class", "cardResumeBtn")
+                btn_resume.setFixedHeight(26)
+                btn_resume.clicked.connect(lambda: self.resume_clicked.emit(self.task_id))
+                self.actions_layout.addWidget(btn_resume)
+
+                btn_cancel = QPushButton(t("task_btn_abort"), self)
+                btn_cancel.setProperty("class", "cardCancelBtn")
+                btn_cancel.setFixedHeight(26)
+                btn_cancel.clicked.connect(lambda: self.cancel_clicked.emit(self.task_id))
+                self.actions_layout.addWidget(btn_cancel)
         elif status == "muxing":
+            btn_pause = QPushButton(t("task_btn_pause"), self)
+            btn_pause.setProperty("class", "cardPauseBtn")
+            btn_pause.setFixedHeight(26)
+            btn_pause.clicked.connect(lambda: self.pause_clicked.emit(self.task_id))
+            self.actions_layout.addWidget(btn_pause)
+
             btn_cancel = QPushButton(t("task_btn_abort"), self)
             btn_cancel.setProperty("class", "cardCancelBtn")
             btn_cancel.setFixedHeight(26)

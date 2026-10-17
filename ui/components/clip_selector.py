@@ -113,7 +113,7 @@ class ClipRowWidget(QFrame):
         self.txt_label.setFixedHeight(26)
         self.txt_label.setPlaceholderText("// Label klip (opsional)...")
         self.txt_label.setStyleSheet("font-weight: 500; font-size: 11px;")
-        self.txt_label.textChanged.connect(self.changed.emit)
+        self.txt_label.textChanged.connect(lambda: self.changed.emit())
         layout.addWidget(self.txt_label, 1)
 
         # Delete button
@@ -174,6 +174,7 @@ class ClipRowWidget(QFrame):
 class ClipSelectorWidget(QFrame):
     clips_changed = Signal(list)
     toggled = Signal(bool)
+    open_trimmer_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -221,6 +222,20 @@ class ClipSelectorWidget(QFrame):
                 background-color: rgba(56, 189, 248, 0.18);
                 border-color: #38bdf8;
             }
+            QPushButton#btnOpenTrimmer {
+                background-color: rgba(56, 189, 248, 0.12);
+                border: 1px solid #38bdf8;
+                border-radius: 6px;
+                color: #38bdf8;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 6px 14px;
+            }
+            QPushButton#btnOpenTrimmer:hover {
+                background-color: #38bdf8;
+                color: #09090b;
+            }
         """)
 
         self._init_ui()
@@ -232,11 +247,19 @@ class ClipSelectorWidget(QFrame):
 
         # Header toggle bar
         header_h = QHBoxLayout()
-        header_h.setSpacing(8)
+        header_h.setSpacing(12)
 
         self.chk_enable = QCheckBox(t("clip_enable_toggle"), self)
         self.chk_enable.toggled.connect(self._on_toggled)
         header_h.addWidget(self.chk_enable)
+
+        # Prominent ALWAYS VISIBLE button in header
+        self.btn_header_trimmer = QPushButton(t("trimmer_open_btn"), self)
+        self.btn_header_trimmer.setObjectName("btnOpenTrimmer")
+        self.btn_header_trimmer.setFixedHeight(26)
+        self.btn_header_trimmer.setCursor(Qt.PointingHandCursor)
+        self.btn_header_trimmer.clicked.connect(self._on_open_trimmer_clicked)
+        header_h.addWidget(self.btn_header_trimmer)
 
         header_h.addStretch()
 
@@ -256,6 +279,7 @@ class ClipSelectorWidget(QFrame):
         # Helper text
         self.lbl_helper = QLabel("// Tentukan satu atau beberapa rentang durasi. Setiap rentang akan dipotong & diunduh sebagai file klip terpisah:", self.body_container)
         self.lbl_helper.setStyleSheet("color: #71717a; font-family: 'JetBrains Mono', monospace; font-size: 10px;")
+        self.lbl_helper.setWordWrap(True)
         self.body_layout.addWidget(self.lbl_helper)
 
         # Rows container
@@ -263,22 +287,37 @@ class ClipSelectorWidget(QFrame):
         self.rows_layout.setSpacing(6)
         self.body_layout.addLayout(self.rows_layout)
 
-        # Action bar under clips (Add clip button)
+        # Action bar under clips (Add clip button + Open Visual Trimmer button)
         actions_h = QHBoxLayout()
+        actions_h.setSpacing(8)
+
         self.btn_add_clip = QPushButton(t("clip_add_btn"), self.body_container)
         self.btn_add_clip.setObjectName("btnAddClip")
         self.btn_add_clip.setFixedHeight(30)
         self.btn_add_clip.clicked.connect(self._on_add_clip_clicked)
         actions_h.addWidget(self.btn_add_clip)
+
+
         actions_h.addStretch()
         self.body_layout.addLayout(actions_h)
 
         self.body_container.setVisible(False)
         main_layout.addWidget(self.body_container)
 
+    def retranslate_ui(self):
+        self.chk_enable.setText(t("clip_enable_toggle"))
+        self.btn_header_trimmer.setText(t("trimmer_open_btn"))
+        self.btn_add_clip.setText(t("clip_add_btn"))
+        self._update_clips()
+
     def set_max_duration(self, seconds: int, duration_str: str):
         self.max_duration_seconds = max(0, int(seconds or 0))
         self.max_duration_str = duration_str or "--"
+
+    def _on_open_trimmer_clicked(self):
+        if not self.chk_enable.isChecked():
+            self.chk_enable.setChecked(True)
+        self.open_trimmer_requested.emit()
 
     def _on_toggled(self, checked: bool):
         self.body_container.setVisible(checked)
@@ -375,6 +414,34 @@ class ClipSelectorWidget(QFrame):
             if not data["is_valid"]:
                 return False, t("clip_err_invalid").format(idx=i + 1)
         return True, ""
+
+    def set_clips(self, clips_list: list):
+        """Programmatically set clips from external source (like VisualTrimmerDialog)."""
+        while self.clip_rows:
+            row = self.clip_rows.pop(0)
+            self.rows_layout.removeWidget(row)
+            row.deleteLater()
+
+        if clips_list:
+            self.chk_enable.setChecked(True)
+            self.body_container.setVisible(True)
+            self.lbl_badge.setVisible(True)
+            for c in clips_list:
+                s_sec = c.get("start", 0)
+                e_sec = c.get("end", 60)
+                lbl = c.get("label", "")
+                idx = len(self.clip_rows) + 1
+                row = ClipRowWidget(idx, s_sec, e_sec, self.max_duration_seconds, self.body_container)
+                if lbl:
+                    row.txt_label.setText(lbl)
+                if hasattr(self, "size_estimator") and self.size_estimator:
+                    row.size_estimator = self.size_estimator
+                    row._update_duration_display()
+                row.delete_clicked.connect(self._on_delete_row)
+                row.changed.connect(self._update_clips)
+                self.rows_layout.addWidget(row)
+                self.clip_rows.append(row)
+        self._update_clips()
 
     def reset(self):
         self.chk_enable.setChecked(False)

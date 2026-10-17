@@ -62,16 +62,23 @@ def build():
         "PySide6.QtCore",
         "PySide6.QtGui",
         "PySide6.QtWidgets",
+        "PySide6.QtMultimedia",
+        "PySide6.QtMultimediaWidgets",
         "ui",
         "ui.styles",
         "ui.main_window",
         "ui.components.title_bar",
         "ui.components.format_cards",
         "ui.components.task_item",
+        "ui.components.clip_selector",
         "ui.dialogs.settings_dialog",
         "ui.dialogs.history_dialog",
         "ui.dialogs.profile_dialog",
         "ui.dialogs.who_are_you_dialog",
+        "ui.dialogs.playlist_dialog",
+        "ui.dialogs.trimmer_dialog",
+        "ui.dialogs.extension_dialog",
+        "ui.dialogs.user_dialog",
         "uvicorn",
         "uvicorn.logging",
         "uvicorn.loops",
@@ -100,7 +107,9 @@ def build():
         "backend.history",
         "backend.parser",
         "backend.telemetry",
-        "backend.i18n"
+        "backend.i18n",
+        "backend.conversion_guard",
+        "backend.ipc_bridge"
     ]
 
     pyinstaller_cmd = [

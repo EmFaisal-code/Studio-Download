@@ -16,6 +16,19 @@ from backend.parser import (
     is_tiktok_url, fetch_tiktok_tikwm, fetch_tiktok_original_task,
     resolve_tiktok_url, normalize_youtube_url, get_prores_bitrate_mbps
 )
+from backend.conversion_guard import (
+    log_conversion_audit,
+    get_path_disk_free,
+    get_drive_name,
+    format_bytes_human,
+    suspend_process,
+    resume_process,
+    register_low_disk_paused_conversion,
+    unregister_low_disk_paused_conversion,
+    trigger_resume_for_task,
+    get_low_disk_record,
+    MIN_SYSTEM_HEADROOM_BYTES
+)
 
 # Global active downloads dictionary: {task_id: task_data}
 active_tasks = {}
@@ -520,6 +533,15 @@ class DownloadManager:
         if task_id in pause_events:
             pause_events[task_id].set()
 
+        # Clean up any low disk wait records
+        rec = get_low_disk_record(task_id)
+        if rec:
+            ev = rec.get("resume_event")
+            if ev:
+                ev.set()
+            unregister_low_disk_paused_conversion(task_id)
+            log_conversion_audit(task_id, "CONVERSION_CANCELLED_WHILE_PAUSED", "Task cancelled while waiting on disk space")
+
         proc = active_subprocesses.pop(task_id, None)
         if proc:
             try:
@@ -549,25 +571,21 @@ class DownloadManager:
         task = active_tasks.get(task_id)
         if not task:
             return False
-        if task.get("status") in ("starting", "downloading", "queued"):
+        if task.get("status") in ("starting", "downloading", "queued", "muxing"):
             now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+            prev_status = task.get("status")
+            task["_previous_status"] = prev_status
             task["status"] = "paused"
             task["speed"] = "0 KB/s"
-            task["eta"] = "Dijeda (Paused)"
+            task["eta"] = "Konversi Dijeda (Paused)" if prev_status == "muxing" else "Dijeda (Paused)"
             task["updated_at"] = now_str
             if task_id in pause_events:
                 pause_events[task_id].clear()
 
             proc = active_subprocesses.get(task_id)
             if proc:
-                try:
-                    import ctypes
-                    handle = ctypes.windll.kernel32.OpenProcess(0x1F0FFF, False, proc.pid)
-                    if handle:
-                        ctypes.windll.ntdll.NtSuspendProcess(handle)
-                        ctypes.windll.kernel32.CloseHandle(handle)
-                except Exception:
-                    pass
+                suspend_process(proc.pid)
+                log_conversion_audit(task_id, "PROCESS_USER_PAUSED", f"User paused active process PID {proc.pid}")
 
             with running_tasks_lock:
                 for item in list(download_queue):
@@ -585,6 +603,17 @@ class DownloadManager:
             return False
         if task.get("status") == "paused":
             now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Check if this task was paused due to low disk space
+            if task.get("disk_low"):
+                success, msg = trigger_resume_for_task(task_id, is_manual=True)
+                if not success:
+                    task["eta"] = msg
+                    broadcast_progress(task_id, task)
+                    return False
+                task["disk_low"] = False
+                task.pop("pause_reason", None)
+
             settings = get_settings()
             max_concurrent = settings.get("max_concurrent_downloads", 2)
             if max_concurrent is None:
@@ -604,25 +633,21 @@ class DownloadManager:
                     return True
 
             if task_id in active_threads:
-                task["status"] = "downloading"
+                # If it was converting/muxing before pausing, restore muxing status
+                prev_status = task.get("_previous_status") or ("muxing" if task.get("stage") == "transcode_prores" else "downloading")
+                task["status"] = prev_status
                 task["speed"] = "--"
-                task["eta"] = "Melanjutkan unduhan..."
+                task["eta"] = "Melanjutkan konversi..." if prev_status == "muxing" else "Melanjutkan unduhan..."
                 task["updated_at"] = now_str
                 if task_id in pause_events:
                     pause_events[task_id].set()
 
                 proc = active_subprocesses.get(task_id)
                 if proc:
-                    try:
-                        import ctypes
-                        handle = ctypes.windll.kernel32.OpenProcess(0x1F0FFF, False, proc.pid)
-                        if handle:
-                            ctypes.windll.ntdll.NtResumeProcess(handle)
-                            ctypes.windll.kernel32.CloseHandle(handle)
-                    except Exception:
-                        pass
+                    resume_process(proc.pid)
+                    log_conversion_audit(task_id, "PROCESS_USER_RESUMED", f"User resumed active process PID {proc.pid}")
 
-                update_history_entry(task_id, {"status": "downloading", "updated_at": now_str})
+                update_history_entry(task_id, {"status": task["status"], "updated_at": now_str})
                 broadcast_progress(task_id, task)
                 return True
             else:
@@ -639,6 +664,25 @@ class DownloadManager:
                 thread.start()
                 return True
         return False
+
+    def recheck_disk_and_resume(self, task_id: str) -> tuple[bool, str]:
+        """Manually triggers disk recheck for a task paused due to low disk space."""
+        task = active_tasks.get(task_id)
+        if not task:
+            return False, "Tugas tidak ditemukan."
+
+        success, msg = trigger_resume_for_task(task_id, is_manual=True)
+        if success:
+            task["disk_low"] = False
+            task.pop("pause_reason", None)
+            task["status"] = "muxing"
+            task["eta"] = "Ruang disk mencukupi. Melanjutkan konversi..."
+            broadcast_progress(task_id, task)
+            return True, msg
+        else:
+            task["eta"] = f"Peringatan: {msg}"
+            broadcast_progress(task_id, task)
+            return False, msg
 
     def dismiss_task(self, task_id: str):
         if task_id in active_tasks:
@@ -739,6 +783,8 @@ class DownloadManager:
                 except DownloadCancelledException:
                     raise
                 except Exception as tt_err:
+                    import traceback
+                    traceback.print_exc()
                     print(f"[!] TikWM direct download failed ({tt_err}), falling back to yt-dlp...")
 
             # Immediate status broadcast
@@ -918,11 +964,14 @@ class DownloadManager:
                 merge_fmt = requested_format if requested_format in ["mp4", "mkv"] else "mp4"
                 is_clip = bool(ydl_opts_ranges)
 
+                # Direct handling for TikTok fallback in yt-dlp
+                if is_tiktok_url(url) or (format_id and str(format_id).startswith("tiktok_")):
+                    ydl_opts['format'] = "bestvideo+bestaudio/best"
                 # Clip / time range slicing on YouTube:
                 # Prefer m3u8_native (HLS) streams for both video and audio because FFmpeg
                 # fetches only the discrete segments for the requested time range,
                 # avoiding draining gigabytes from byte 0 on long videos.
-                if is_yt and is_clip:
+                elif is_yt and is_clip:
                     if height:
                         ydl_opts['format'] = (
                             f"bestvideo[height<={height}][protocol^=m3u8]+bestaudio[protocol^=m3u8]/"
@@ -937,7 +986,7 @@ class DownloadManager:
                             "bestvideo+bestaudio"
                         )
                 # If a specific stream format_id was chosen (from format card)
-                elif format_id and format_id != "best":
+                elif format_id and format_id != "best" and not str(format_id).startswith("tiktok_"):
                     if height:
                         ydl_opts['format'] = (
                             f"{format_id}+bestaudio[ext=m4a]/"
@@ -1071,119 +1120,282 @@ class DownloadManager:
 
                 bitrate_mbps = get_prores_bitrate_mbps(height, 30)
                 est_bytes = int(dur_sec * (bitrate_mbps * 125000) * 1.1) if dur_sec > 0 else (15 * 1024**3)
-                free_space = shutil.disk_usage(temp_dir).free
+                drive_name = get_drive_name(temp_dir)
+                needed_free = est_bytes + MIN_SYSTEM_HEADROOM_BYTES
 
-                if free_space < est_bytes:
-                    task["eta"] = f"Ruang disk ({format_bytes(free_space)}) tidak cukup untuk ProRes 422 (~{format_bytes(est_bytes)}). Format asli disimpan."
-                    broadcast_progress(task_id, task)
-                    time.sleep(2.0)
-                else:
-                    task["status"] = "muxing"
+                log_conversion_audit(task_id, "PRE_CHECK", "Checking disk space before ProRes 422 transcode", {
+                    "drive": drive_name,
+                    "target_dir": temp_dir,
+                    "est_bytes": format_bytes_human(est_bytes),
+                    "needed_free": format_bytes_human(needed_free),
+                    "dur_sec": dur_sec
+                })
+
+                free_space = get_path_disk_free(temp_dir)
+                if free_space < needed_free:
+                    # PRE-CONVERSION PAUSE: Ruang disk tidak cukup sebelum konversi dimulai
+                    task["status"] = "paused"
                     task["stage"] = "transcode_prores"
+                    task["disk_low"] = True
+                    task["pause_reason"] = "low_disk"
                     task["progress"] = 0.5
                     task["speed"] = "0.0x"
-                    task["eta"] = "Menyiapkan Transcode ProRes 422 (0.0%)..."
-                    broadcast_progress(task_id, task)
-                    prores_file = os.path.join(temp_dir, f"prores_master.mov")
-                    cmd = [
-                        "ffmpeg", "-y",
-                        "-nostats",
-                        "-progress", "pipe:1",
-                        "-i", source_file,
-                        "-c:v", "prores_ks",
-                        "-profile:v", "2",
-                        "-vendor", "apl0",
-                        "-c:a", "pcm_s16le",
-                        prores_file
-                    ]
-                    creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-                    proc = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.DEVNULL,
-                        text=True,
-                        bufsize=1,
-                        creationflags=creationflags
+                    task["disk_needed"] = format_bytes_human(needed_free)
+                    task["disk_free"] = format_bytes_human(free_space)
+                    task["disk_drive"] = drive_name
+                    warning_msg = (
+                        f"Ruang disk ({drive_name}) tidak cukup untuk ProRes 422. "
+                        f"Tersisa {format_bytes_human(free_space)}, dibutuhkan ~{format_bytes_human(needed_free)}. "
+                        f"Konversi dijeda otomatis hingga ruang dikosongkan."
                     )
-                    active_subprocesses[task_id] = proc
-                    try:
-                        cur_sec = 0.0
-                        cur_speed = "1.0x"
-                        last_ui_update = 0
-                        while True:
-                            if cancel_events.get(task_id) and cancel_events[task_id].is_set():
-                                try:
-                                    proc.kill()
-                                except Exception:
-                                    pass
-                                if os.path.exists(prores_file):
-                                    try:
-                                        os.remove(prores_file)
-                                    except Exception:
-                                        pass
-                                raise DownloadCancelledException("Dibatalkan saat transcoding ProRes.")
+                    task["eta"] = warning_msg
 
-                            line = proc.stdout.readline()
-                            if not line and proc.poll() is not None:
-                                break
-                            if not line:
-                                continue
+                    checkpoint = {
+                        "stage": "transcode_prores",
+                        "cur_sec": 0.0,
+                        "dur_sec": dur_sec,
+                        "source_file": source_file,
+                        "temp_dir": temp_dir,
+                        "est_bytes": est_bytes,
+                        "required_bytes": needed_free
+                    }
+                    task["conversion_checkpoint"] = checkpoint
+                    update_history_entry(task_id, {"status": "paused", "disk_low": True, "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
+                    broadcast_progress(task_id, task)
 
-                            line = line.strip()
-                            if "=" in line:
-                                k, v = line.split("=", 1)
-                                k, v = k.strip(), v.strip()
-                                if k == "out_time_ms":
-                                    try:
-                                        cur_sec = float(v) / 1_000_000.0
-                                    except ValueError:
-                                        pass
-                                elif k == "speed":
-                                    cur_speed = v
-                                elif k == "progress" and v == "end":
-                                    break
+                    log_conversion_audit(task_id, "PRE_CONVERSION_LOW_DISK_PAUSED", warning_msg, {
+                        "drive": drive_name,
+                        "free_bytes": format_bytes_human(free_space),
+                        "needed_bytes": format_bytes_human(needed_free)
+                    })
 
-                            now = time.time()
-                            if now - last_ui_update >= 0.25:
-                                last_ui_update = now
-                                if dur_sec > 0:
-                                    pct = min(99.0, max(0.5, (cur_sec / dur_sec) * 100.0))
-                                    spd_num = 1.0
-                                    try:
-                                        spd_num = float(cur_speed.rstrip('x').strip())
-                                    except Exception:
-                                        spd_num = 1.0
-                                    if spd_num <= 0.05:
-                                        spd_num = 1.0
-                                    rem_sec = max(0, int((dur_sec - cur_sec) / spd_num))
-                                    eta_str = format_duration(rem_sec)
-                                    cur_t_str = format_duration(int(cur_sec))
-                                    tot_t_str = format_duration(int(dur_sec))
+                    resume_ev = register_low_disk_paused_conversion(
+                        task_id, temp_dir, needed_free, None, checkpoint
+                    )
 
-                                    task["stage"] = "transcode_prores"
-                                    task["progress"] = round(pct, 1)
-                                    task["speed"] = cur_speed
-                                    task["transcode_current"] = cur_t_str
-                                    task["transcode_total"] = tot_t_str
-                                    task["transcode_eta"] = eta_str
-                                    task["eta"] = f"Transcode: {pct:.1f}% [{cur_t_str} / {tot_t_str}] @ {cur_speed}"
-                                else:
-                                    task["stage"] = "transcode_prores"
-                                    task["progress"] = 50.0
-                                    task["speed"] = cur_speed
-                                    task["eta"] = f"Transcode ProRes 422: {format_duration(int(cur_sec))} @ {cur_speed}"
-                                broadcast_progress(task_id, task)
+                    while not resume_ev.is_set():
+                        if cancel_events.get(task_id) and cancel_events[task_id].is_set():
+                            unregister_low_disk_paused_conversion(task_id)
+                            log_conversion_audit(task_id, "CONVERSION_CANCELLED", "ProRes transcode cancelled by user while waiting on disk space")
+                            raise DownloadCancelledException("Dibatalkan oleh pengguna saat menunggu ruang disk.")
+                        time.sleep(0.5)
 
-                        proc.wait()
-                        if proc.returncode == 0 and os.path.exists(prores_file):
+                    task["disk_low"] = False
+                    task.pop("pause_reason", None)
+                    task["status"] = "muxing"
+                    task["eta"] = "Ruang disk mencukupi. Memulai Transcode ProRes 422..."
+                    broadcast_progress(task_id, task)
+
+                task["status"] = "muxing"
+                task["stage"] = "transcode_prores"
+                task["disk_low"] = False
+                task["progress"] = 0.5
+                task["speed"] = "0.0x"
+                task["eta"] = "Menyiapkan Transcode ProRes 422 (0.0%)..."
+                broadcast_progress(task_id, task)
+                prores_file = os.path.join(temp_dir, f"prores_master.mov")
+                cmd = [
+                    "ffmpeg", "-y",
+                    "-nostats",
+                    "-progress", "pipe:1",
+                    "-i", source_file,
+                    "-c:v", "prores_ks",
+                    "-profile:v", "2",
+                    "-vendor", "apl0",
+                    "-c:a", "pcm_s16le",
+                    prores_file
+                ]
+                creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    bufsize=1,
+                    creationflags=creationflags
+                )
+                active_subprocesses[task_id] = proc
+                log_conversion_audit(task_id, "CONVERSION_PROCESS_SPAWNED", "FFmpeg spawned for ProRes 422", {
+                    "pid": proc.pid,
+                    "output_file": prores_file
+                })
+
+                try:
+                    cur_sec = 0.0
+                    cur_speed = "1.0x"
+                    last_ui_update = 0
+                    last_disk_check = 0
+
+                    while True:
+                        if cancel_events.get(task_id) and cancel_events[task_id].is_set():
                             try:
-                                os.remove(source_file)
+                                proc.kill()
                             except Exception:
                                 pass
-                            source_file = prores_file
-                            target_ext = "mov"
-                    finally:
-                        active_subprocesses.pop(task_id, None)
+                            if os.path.exists(prores_file):
+                                try:
+                                    os.remove(prores_file)
+                                except Exception:
+                                    pass
+                            unregister_low_disk_paused_conversion(task_id)
+                            log_conversion_audit(task_id, "CONVERSION_CANCELLED", "ProRes transcode cancelled by user")
+                            raise DownloadCancelledException("Dibatalkan saat transcoding ProRes.")
+
+                        # User manual pause check
+                        pause_ev = pause_events.get(task_id)
+                        if pause_ev and not pause_ev.is_set():
+                            suspend_process(proc.pid)
+                            while pause_ev and not pause_ev.is_set():
+                                if cancel_events.get(task_id) and cancel_events[task_id].is_set():
+                                    try:
+                                        proc.kill()
+                                    except Exception:
+                                        pass
+                                    raise DownloadCancelledException("Dibatalkan saat transcoding ProRes.")
+                                time.sleep(0.3)
+                            resume_process(proc.pid)
+
+                        # REAL-TIME DISK SPACE MONITORING DURING CONVERSION
+                        now = time.time()
+                        if now - last_disk_check >= 0.8:
+                            last_disk_check = now
+                            cur_free = get_path_disk_free(temp_dir)
+                            ratio_done = (cur_sec / dur_sec) if dur_sec > 0 else 0.5
+                            est_remaining = int(est_bytes * max(0.05, 1.0 - ratio_done))
+                            required_remaining_free = est_remaining + MIN_SYSTEM_HEADROOM_BYTES
+
+                            if cur_free < required_remaining_free or cur_free < MIN_SYSTEM_HEADROOM_BYTES:
+                                # SUSPEND CONVERSION!
+                                suspend_process(proc.pid)
+                                pct = min(99.0, max(0.5, (cur_sec / dur_sec) * 100.0)) if dur_sec > 0 else 50.0
+                                checkpoint = {
+                                    "stage": "transcode_prores",
+                                    "cur_sec": cur_sec,
+                                    "dur_sec": dur_sec,
+                                    "pct": round(pct, 1),
+                                    "speed": cur_speed,
+                                    "source_file": source_file,
+                                    "output_file": prores_file,
+                                    "temp_dir": temp_dir,
+                                    "est_remaining": est_remaining,
+                                    "required_bytes": required_remaining_free,
+                                    "pid": proc.pid
+                                }
+                                task["conversion_checkpoint"] = checkpoint
+                                task["status"] = "paused"
+                                task["disk_low"] = True
+                                task["pause_reason"] = "low_disk"
+                                task["progress"] = round(pct, 1)
+                                task["disk_needed"] = format_bytes_human(required_remaining_free)
+                                task["disk_free"] = format_bytes_human(cur_free)
+                                task["disk_drive"] = drive_name
+
+                                warning_msg = (
+                                    f"Ruang disk ({drive_name}) menipis saat transcode ProRes ({pct:.1f}%)! "
+                                    f"Tersisa {format_bytes_human(cur_free)}, dibutuhkan ~{format_bytes_human(required_remaining_free)}. "
+                                    f"Proses dihentikan sementara (Lossless Pause)."
+                                )
+                                task["eta"] = warning_msg
+                                update_history_entry(task_id, {"status": "paused", "disk_low": True, "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
+                                broadcast_progress(task_id, task)
+
+                                log_conversion_audit(task_id, "PROCESS_SUSPENDED_LOW_DISK", warning_msg, {
+                                    "drive": drive_name,
+                                    "free_bytes": format_bytes_human(cur_free),
+                                    "needed_bytes": format_bytes_human(required_remaining_free),
+                                    "progress_pct": f"{pct:.1f}%",
+                                    "cur_sec": cur_sec,
+                                    "pid": proc.pid
+                                })
+
+                                resume_ev = register_low_disk_paused_conversion(
+                                    task_id, temp_dir, required_remaining_free, proc, checkpoint
+                                )
+
+                                while not resume_ev.is_set():
+                                    if cancel_events.get(task_id) and cancel_events[task_id].is_set():
+                                        try:
+                                            proc.kill()
+                                        except Exception:
+                                            pass
+                                        unregister_low_disk_paused_conversion(task_id)
+                                        log_conversion_audit(task_id, "CONVERSION_CANCELLED", "ProRes transcode cancelled by user while paused")
+                                        raise DownloadCancelledException("Dibatalkan saat jeda ruang disk.")
+                                    time.sleep(0.5)
+
+                                task["disk_low"] = False
+                                task.pop("pause_reason", None)
+                                task["status"] = "muxing"
+                                task["eta"] = f"Ruang disk mencukupi. Melanjutkan Transcode ProRes ({pct:.1f}%)..."
+                                broadcast_progress(task_id, task)
+
+                        line = proc.stdout.readline()
+                        if not line and proc.poll() is not None:
+                            break
+                        if not line:
+                            continue
+
+                        line = line.strip()
+                        if "=" in line:
+                            k, v = line.split("=", 1)
+                            k, v = k.strip(), v.strip()
+                            if k == "out_time_ms":
+                                try:
+                                    cur_sec = float(v) / 1_000_000.0
+                                except ValueError:
+                                    pass
+                            elif k == "speed":
+                                cur_speed = v
+                            elif k == "progress" and v == "end":
+                                break
+
+                        now = time.time()
+                        if now - last_ui_update >= 0.25:
+                            last_ui_update = now
+                            if dur_sec > 0:
+                                pct = min(99.0, max(0.5, (cur_sec / dur_sec) * 100.0))
+                                spd_num = 1.0
+                                try:
+                                    spd_num = float(cur_speed.rstrip('x').strip())
+                                except Exception:
+                                    spd_num = 1.0
+                                if spd_num <= 0.05:
+                                    spd_num = 1.0
+                                rem_sec = max(0, int((dur_sec - cur_sec) / spd_num))
+                                eta_str = format_duration(rem_sec)
+                                cur_t_str = format_duration(int(cur_sec))
+                                tot_t_str = format_duration(int(dur_sec))
+
+                                task["stage"] = "transcode_prores"
+                                task["progress"] = round(pct, 1)
+                                task["speed"] = cur_speed
+                                task["transcode_current"] = cur_t_str
+                                task["transcode_total"] = tot_t_str
+                                task["transcode_eta"] = eta_str
+                                task["eta"] = f"Transcode: {pct:.1f}% [{cur_t_str} / {tot_t_str}] @ {cur_speed}"
+                            else:
+                                task["stage"] = "transcode_prores"
+                                task["progress"] = 50.0
+                                task["speed"] = cur_speed
+                                task["eta"] = f"Transcode ProRes 422: {format_duration(int(cur_sec))} @ {cur_speed}"
+                            broadcast_progress(task_id, task)
+
+                    proc.wait()
+                    unregister_low_disk_paused_conversion(task_id)
+                    if proc.returncode == 0 and os.path.exists(prores_file):
+                        try:
+                            os.remove(source_file)
+                        except Exception:
+                            pass
+                        source_file = prores_file
+                        target_ext = "mov"
+                        log_conversion_audit(task_id, "CONVERSION_COMPLETED", "ProRes 422 transcode completed successfully", {
+                            "output_file": prores_file,
+                            "final_size": format_bytes_human(os.path.getsize(prores_file))
+                        })
+                finally:
+                    unregister_low_disk_paused_conversion(task_id)
+                    active_subprocesses.pop(task_id, None)
 
             # Generate clean unique destination filepath in out_dir
             final_dest = get_unique_filepath(out_dir, title, target_ext)
@@ -1301,6 +1513,7 @@ class DownloadManager:
         if not task:
             return
 
+        os.makedirs(temp_dir, exist_ok=True)
         task["status"] = "starting"
         task["eta"] = "Menghubungkan ke server TikTok CDN (TikWM)..."
         task["speed"] = "--"
@@ -1440,7 +1653,43 @@ class DownloadManager:
         final_ext = req_format
 
         # Post-processing
+        sec_start = options.get("section_start")
+        sec_end = options.get("section_end")
+        has_slice = (sec_start is not None and sec_end is not None and float(sec_end) > float(sec_start))
         ffmpeg_bin = shutil.which("ffmpeg") or str(get_bundle_dir() / "ffmpeg.exe") or "ffmpeg"
+
+        needs_conv = (mode == "audio" and req_format in ["mp3", "m4a"]) or req_format == "mkv" or has_slice
+        if needs_conv:
+            tt_needed = os.path.getsize(temp_file) if os.path.exists(temp_file) else (50 * 1024 * 1024)
+            tt_needed_headroom = tt_needed + MIN_SYSTEM_HEADROOM_BYTES
+            tt_free = get_path_disk_free(temp_dir)
+            if tt_free < tt_needed_headroom:
+                dr = get_drive_name(temp_dir)
+                task["status"] = "paused"
+                task["disk_low"] = True
+                task["pause_reason"] = "low_disk"
+                task["disk_needed"] = format_bytes_human(tt_needed_headroom)
+                task["disk_free"] = format_bytes_human(tt_free)
+                task["disk_drive"] = dr
+                warning_msg = (
+                    f"Ruang disk ({dr}) tidak cukup untuk memproses audio/remux TikTok. "
+                    f"Tersisa {format_bytes_human(tt_free)}, dibutuhkan ~{format_bytes_human(tt_needed_headroom)}. "
+                    f"Konversi dijeda otomatis hingga ruang dikosongkan."
+                )
+                task["eta"] = warning_msg
+                update_history_entry(task_id, {"status": "paused", "disk_low": True, "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
+                broadcast_progress(task_id, task)
+                log_conversion_audit(task_id, "PRE_CONVERSION_LOW_DISK_PAUSED", warning_msg, {"drive": dr, "free": tt_free, "needed": tt_needed_headroom})
+                rev = register_low_disk_paused_conversion(task_id, temp_dir, tt_needed_headroom, None, {"stage": "tiktok_conv", "temp_file": temp_file})
+                while not rev.is_set():
+                    if cancel_ev and cancel_ev.is_set():
+                        unregister_low_disk_paused_conversion(task_id)
+                        raise DownloadCancelledException("Dibatalkan saat menunggu ruang disk.")
+                    time.sleep(0.5)
+                task["disk_low"] = False
+                task.pop("pause_reason", None)
+                task["status"] = "muxing"
+                broadcast_progress(task_id, task)
 
         if mode == "audio":
             if req_format in ["mp3", "m4a"]:
@@ -1469,9 +1718,7 @@ class DownloadManager:
                     source_file = mkv_file
 
         # Multi-clip / time range slicing if requested
-        sec_start = options.get("section_start")
-        sec_end = options.get("section_end")
-        if sec_start is not None and sec_end is not None and float(sec_end) > float(sec_start):
+        if has_slice:
             task["status"] = "muxing"
             task["eta"] = "Memotong durasi klip (FFmpeg)..."
             broadcast_progress(task_id, task)
@@ -1631,11 +1878,49 @@ class DownloadManager:
             final_dest = get_unique_filepath(out_dir, title, requested_format)
             sec_start = options.get("section_start")
             sec_end = options.get("section_end")
+            ffmpeg_bin = shutil.which("ffmpeg") or str(get_bundle_dir() / "ffmpeg.exe") or "ffmpeg"
             if sec_start is not None and sec_end is not None and float(sec_end) > float(sec_start):
-                cmd = ["ffmpeg", "-y", "-ss", str(sec_start), "-to", str(sec_end), "-i", raw_ts_path, "-c", "copy", "-avoid_negative_ts", "make_zero", final_dest]
+                cmd = [ffmpeg_bin, "-y", "-ss", str(sec_start), "-to", str(sec_end), "-i", raw_ts_path, "-c", "copy", "-avoid_negative_ts", "make_zero", final_dest]
             else:
-                cmd = ["ffmpeg", "-y", "-i", raw_ts_path, "-c", "copy", final_dest]
-            subprocess.run(cmd, capture_output=True)
+                cmd = [ffmpeg_bin, "-y", "-i", raw_ts_path, "-c", "copy", final_dest]
+
+            # Storage space guard check before remux
+            raw_ts_size = os.path.getsize(raw_ts_path) if os.path.exists(raw_ts_path) else 0
+            needed_bytes = raw_ts_size + MIN_SYSTEM_HEADROOM_BYTES
+            free_bytes = get_path_disk_free(out_dir)
+            if free_bytes < needed_bytes:
+                dr = get_drive_name(out_dir)
+                task["status"] = "paused"
+                task["disk_low"] = True
+                task["pause_reason"] = "low_disk"
+                task["disk_needed"] = format_bytes_human(needed_bytes)
+                task["disk_free"] = format_bytes_human(free_bytes)
+                task["disk_drive"] = dr
+                warning_msg = (
+                    f"Ruang disk ({dr}) tidak cukup untuk remux stream MP4. "
+                    f"Tersisa {format_bytes_human(free_bytes)}, dibutuhkan ~{format_bytes_human(needed_bytes)}. "
+                    f"Konversi dijeda otomatis hingga ruang dikosongkan."
+                )
+                task["eta"] = warning_msg
+                update_history_entry(task_id, {"status": "paused", "disk_low": True, "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
+                broadcast_progress(task_id, task)
+                log_conversion_audit(task_id, "PRE_CONVERSION_LOW_DISK_PAUSED", warning_msg, {"drive": dr, "free": free_bytes, "needed": needed_bytes})
+                rev = register_low_disk_paused_conversion(task_id, out_dir, needed_bytes, None, {"stage": "hls_remux", "raw_ts": raw_ts_path})
+                while not rev.is_set():
+                    if cancel_ev and cancel_ev.is_set():
+                        unregister_low_disk_paused_conversion(task_id)
+                        raise DownloadCancelledException("Dibatalkan saat menunggu ruang disk.")
+                    time.sleep(0.5)
+                task["disk_low"] = False
+                task.pop("pause_reason", None)
+                task["status"] = "muxing"
+                task["eta"] = "Melanjutkan pengemasan file MP4 (FFmpeg)..."
+                broadcast_progress(task_id, task)
+
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            active_subprocesses[task_id] = p
+            p.communicate()
+            active_subprocesses.pop(task_id, None)
 
             if not os.path.exists(final_dest) or os.path.getsize(final_dest) == 0:
                 final_dest = get_unique_filepath(out_dir, title, "ts")
